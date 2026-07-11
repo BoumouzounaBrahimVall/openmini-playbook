@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  mini-apps:
+    name: mini-apps (${{ matrix.app }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [game-2048, game-snake, pomodoro]
+    defaults:
+      run:
+        working-directory: mini-apps/${{ matrix.app }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mini-apps/${{ matrix.app }}/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - name: Pack and validate package
+        run: |
+          npm run pack
+          npx mini inspect dist/*.mpkg
+
+  super-app:
+    name: super-app
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: super-app/openmini-playbook
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: super-app/openmini-playbook/package-lock.json
+      - run: npm ci
+      - run: npx tsc --noEmit
+
+  registry:
+    name: registry
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Server starts and serves the catalog
+        run: |
+          cd registery
+          node server.js &
+          sleep 1
+          curl --fail --silent http://localhost:8300/apps.json > /dev/null
+          kill %1
