@@ -1,0 +1,15 @@
+{
+  "registryVersion": 1,
+  "id": "com.example.game2048",
+  "name": "2048",
+  "latest": "0.1.0",
+  "versions": {
+    "0.1.0": {
+      "package": "0.1.0/app.mpkg",
+      "sha256": "5f88534ad7ac9358ee9bdda2c33a2bab7f03f1b8ce13a1572533655042b8a816",
+      "size": 70858,
+      "runtimeVersion": "0.1.3",
+      "publishedAt": "2026-07-11T20:07:55.058Z"
+    }
+  }
+}
