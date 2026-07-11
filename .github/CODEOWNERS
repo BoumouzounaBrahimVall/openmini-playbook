@@ -1,0 +1,7 @@
+# Paths that require the owner's review before merging (require_code_owner_review
+# is enabled on the protect-main ruleset). Paths not listed here — the mini-apps —
+# only need the ruleset's generic 1 approval, so any collaborator can review them.
+
+/registery/  @BoumouzounaBrahimVall
+/super-app/  @BoumouzounaBrahimVall
+/.github/    @BoumouzounaBrahimVall
