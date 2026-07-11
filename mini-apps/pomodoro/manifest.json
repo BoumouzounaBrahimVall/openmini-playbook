@@ -1,0 +1,9 @@
+{
+  "manifestVersion": 1,
+  "id": "com.example.pomodoro",
+  "name": "Pomodoro",
+  "version": "0.1.0",
+  "runtimeVersion": ">=0.0.0",
+  "permissions": ["storage", "toast"],
+  "allowedDomains": []
+}
