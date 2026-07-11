@@ -1,0 +1,292 @@
+:root {
+  --bg: #f2f7f2;
+  --fg: #3c4a3c;
+  --header-bg: #ffffff;
+  --header-fg: #1a1a1a;
+  --board-bg: #dcefdc;
+  --board-line: rgba(60, 110, 60, 0.08);
+  --snake: #43a047;
+  --snake-head: #2e7d32;
+  --food: #e53935;
+  --chip-bg: #5a8a5a;
+  --chip-fg: #ffffff;
+  --accent: #43a047;
+  --overlay-bg: rgba(242, 247, 242, 0.82);
+  --capsule-border: rgba(0, 0, 0, 0.1);
+
+  --board-size: min(100vw - 32px, 380px);
+  --cell: calc(var(--board-size) / 15);
+}
+
+:root[data-theme="dark"] {
+  --bg: #161b16;
+  --fg: #cfe0cf;
+  --header-bg: #1f271f;
+  --header-fg: #eef5ee;
+  --board-bg: #223122;
+  --board-line: rgba(255, 255, 255, 0.05);
+  --snake: #66bb6a;
+  --snake-head: #a5d6a7;
+  --food: #ef5350;
+  --chip-bg: #33502f;
+  --chip-fg: #eef5ee;
+  --accent: #4caf50;
+  --overlay-bg: rgba(22, 27, 22, 0.85);
+  --capsule-border: rgba(255, 255, 255, 0.18);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui,
+    sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+  overscroll-behavior: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.screen {
+  height: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  height: 48px;
+  padding-top: env(safe-area-inset-top, 0px);
+  background: var(--header-bg);
+  color: var(--header-fg);
+  box-shadow: 0 1px 0 var(--capsule-border);
+}
+
+.app-header-title {
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.capsule {
+  position: absolute;
+  right: 12px;
+  top: calc(env(safe-area-inset-top, 0px) + 8px);
+  display: flex;
+  align-items: center;
+  height: 32px;
+  border: 1px solid var(--capsule-border);
+  border-radius: 16px;
+  background: var(--header-bg);
+  overflow: hidden;
+}
+
+.capsule-btn {
+  width: 44px;
+  height: 100%;
+  border: none;
+  background: transparent;
+  color: var(--header-fg);
+  font-size: 15px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.capsule-btn:active {
+  background: var(--capsule-border);
+}
+
+.capsule-divider {
+  width: 1px;
+  height: 18px;
+  background: var(--capsule-border);
+}
+
+.game {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 12px 16px calc(env(safe-area-inset-bottom, 0px) + 12px);
+}
+
+.scoreboard {
+  width: var(--board-size);
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.score-chip {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: var(--chip-bg);
+  color: var(--chip-fg);
+}
+
+.score-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.8;
+}
+
+.score-value {
+  font-size: 20px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.btn {
+  border: none;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--board-bg);
+  color: var(--fg);
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+}
+
+.btn:active {
+  filter: brightness(0.92);
+}
+
+/* ---- board ---- */
+
+.board {
+  position: relative;
+  width: var(--board-size);
+  height: var(--board-size);
+  border-radius: 10px;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent 0 calc(var(--cell) - 1px),
+      var(--board-line) calc(var(--cell) - 1px) var(--cell)
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent 0 calc(var(--cell) - 1px),
+      var(--board-line) calc(var(--cell) - 1px) var(--cell)
+    ),
+    var(--board-bg);
+  overflow: hidden;
+}
+
+.seg,
+.food {
+  position: absolute;
+  width: var(--cell);
+  height: var(--cell);
+  top: 0;
+  left: 0;
+  transform: translate(
+    calc(var(--x) * var(--cell)),
+    calc(var(--y) * var(--cell))
+  );
+}
+
+.seg::after {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  border-radius: 5px;
+  background: var(--snake);
+}
+
+.seg.head::after {
+  background: var(--snake-head);
+}
+
+.food::after {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border-radius: 50%;
+  background: var(--food);
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: var(--overlay-bg);
+}
+
+.overlay-title {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 800;
+}
+
+.overlay-sub {
+  margin: 0 0 8px;
+  font-size: 14px;
+  opacity: 0.75;
+}
+
+/* ---- arrow pad ---- */
+
+.dpad {
+  display: grid;
+  grid-template-areas:
+    ". up ."
+    "left down right";
+  gap: 8px;
+}
+
+.dpad-btn {
+  width: 64px;
+  height: 52px;
+  border: none;
+  border-radius: 12px;
+  font-size: 18px;
+  background: var(--chip-bg);
+  color: var(--chip-fg);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.dpad-btn:active {
+  filter: brightness(0.88);
+}
+
+.dpad-up { grid-area: up; }
+.dpad-left { grid-area: left; }
+.dpad-down { grid-area: down; }
+.dpad-right { grid-area: right; }
