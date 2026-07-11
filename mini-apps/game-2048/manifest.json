@@ -1,7 +1,7 @@
 {
   "manifestVersion": 1,
   "id": "com.example.game2048",
-  "name": "game-2048",
+  "name": "2048",
   "version": "0.1.0",
   "runtimeVersion": ">=0.0.0",
   "permissions": ["storage", "toast"],

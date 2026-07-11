@@ -1,38 +1,49 @@
 import { mini } from "@openmini/runtime";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
+import { AppHeader } from "./components/AppHeader.js";
+import { Board } from "./components/Board.js";
+import { useGame } from "./game/useGame.js";
 
-/**
- * game-2048 — an OpenMini mini-app. Plain React: use any UI library you
- * like. `mini.*` is the bridge to the host app (storage, toast, and more —
- * see the manifest for what this app is allowed to do).
- */
 export function App() {
-  const [note, setNote] = useState("");
-  const [saved, setSaved] = useState<string | null>(null);
+  const { state, dispatch, restart, continueGame } = useGame();
 
+  // Follow the host theme (light/dark) reported by the bridge.
   useEffect(() => {
-    mini.lifecycle.onLaunch((boot) =>
-      console.debug("launched as", boot?.appId),
-    );
-    void mini.storage.get("note").then(setSaved);
+    void mini.system
+      .getInfo()
+      .then((info) => {
+        document.documentElement.dataset.theme = info.theme;
+      })
+      .catch((error: unknown) => {
+        console.error("2048: getInfo failed", error);
+      });
   }, []);
 
-  async function save() {
-    await mini.storage.set("note", note);
-    setSaved(note);
-    await mini.ui.showToast({ message: "Saved!" });
-  }
-
   return (
-    <main>
-      <h1>game-2048</h1>
-      <p>Saved note: {saved ?? "(nothing yet)"}</p>
-      <input
-        value={note}
-        onChange={(e) => setNote(e.target.value)}
-        placeholder="Type something…"
-      />
-      <button onClick={() => void save()}>Save via mini.storage</button>
-    </main>
+    <div className="screen">
+      <AppHeader title="2048" />
+      <main className="game">
+        <section className="scoreboard">
+          <div className="score-chip">
+            <span className="score-label">Score</span>
+            <span className="score-value">{state.score}</span>
+          </div>
+          <div className="score-chip">
+            <span className="score-label">Best</span>
+            <span className="score-value">{state.best}</span>
+          </div>
+          <button type="button" className="btn btn-primary" onClick={restart}>
+            New game
+          </button>
+        </section>
+        <Board
+          state={state}
+          onSwipe={dispatch}
+          onRestart={restart}
+          onContinue={continueGame}
+        />
+        <p className="hint">Swipe to move the tiles. Same numbers merge!</p>
+      </main>
+    </div>
   );
 }

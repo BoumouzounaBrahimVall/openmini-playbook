@@ -4,7 +4,11 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "mini dev"
+    "dev": "mini dev",
+    "build": "mini build",
+    "pack": "mini pack",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@openmini/runtime": "^0.1.3",
@@ -15,6 +19,7 @@
     "@openmini/cli": "^0.1.3",
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.0",
-    "typescript": "^5.8.0"
+    "typescript": "^5.8.0",
+    "vitest": "^4.1.10"
   }
 }
