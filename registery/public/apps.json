@@ -1,5 +1,5 @@
 {
-  "provider-url": "http://localhost:8300",
+  "provider-url": "https://raw.githubusercontent.com/BoumouzounaBrahimVall/openmini-playbook/main/registery/public",
   "mini-apps": [
     {
       "id": "com.example.game2048",
