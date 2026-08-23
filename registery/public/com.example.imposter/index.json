@@ -6,10 +6,10 @@
   "versions": {
     "0.1.0": {
       "package": "0.1.0/app.mpkg",
-      "sha256": "7db60a2b6a993c8baccc7ec139e8285e7fe90ecba7c4f45fa13fb179432d0d1b",
-      "size": 84404,
+      "sha256": "dbea2adecd355d34d5253a6dbcf1111bea056e401eadc3e2a1fd9ed14679a50f",
+      "size": 84388,
       "runtimeVersion": "0.1.3",
-      "publishedAt": "2026-08-23T14:11:21.706Z"
+      "publishedAt": "2026-08-23T14:37:12.434Z"
     }
   }
 }
