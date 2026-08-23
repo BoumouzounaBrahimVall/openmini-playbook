@@ -321,15 +321,21 @@ body {
   padding: 8px 8px 8px 6px;
   border-radius: 10px;
   background: var(--field-bg);
-  transition: background 120ms ease-out;
+  /* Rows slide to make room for the one being dragged. The held row overrides
+   * this with `transition: none` inline, so it tracks the finger exactly while
+   * everything it displaces animates. */
+  position: relative;
+  transition:
+    transform 170ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    background 120ms ease-out;
 }
 
 /* The row in hand. It has already moved to its new slot in the list -- the
  * reorder commits as the finger crosses -- so this only has to say "this is
  * the one you are holding". */
 .roster-item[data-dragging="yes"] {
-  background: var(--chip-bg);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
+  background: var(--panel-bg);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.22);
 }
 
 .roster-grip {
@@ -639,21 +645,26 @@ body {
   color: rgba(13, 13, 15, 0.78);
 }
 
+/* The face-down artwork, centred in the card. It takes the slack between the
+ * warning above it and the hold prompt below, so it is what the eye lands on
+ * while the card is still face-down. Referenced from CSS rather than imported
+ * in TSX so Vite emits it as an asset with no ambient module declaration —
+ * this repo's tsconfig has none and no other mini-app imports an asset. */
+.card-face {
+  flex: 1;
+  align-self: stretch;
+  min-height: 66px;
+  background-image: url("./card-icon.png");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+}
+
 .card-hold {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  margin-top: auto;
   font-size: 14px;
   font-weight: 800;
   letter-spacing: 0.07em;
   text-transform: uppercase;
-}
-
-.card-hold-icon {
-  font-size: 30px;
-  line-height: 1;
 }
 
 /* ---- the secret slip ----

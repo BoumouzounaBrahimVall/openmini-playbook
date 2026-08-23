@@ -88,12 +88,8 @@ export function PassLoop({ round, index, onPassedOn }: PassLoopProps) {
         ) : (
           <>
             <p className="card-warn">Do not tell the word to other players.</p>
-            <span className="card-hold">
-              <span className="card-hold-icon" aria-hidden="true">
-                &#9757;
-              </span>
-              Hold to reveal
-            </span>
+            <span className="card-face" aria-hidden="true" />
+            <span className="card-hold">Hold to reveal</span>
           </>
         )}
       </div>

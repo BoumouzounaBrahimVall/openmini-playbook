@@ -50,7 +50,10 @@ export function SetupScreen({
   const [draft, setDraft] = useState("");
   // Roster order is the order the phone goes round the table, so it is worth
   // being able to match it to where people are actually sitting.
-  const { dragIndex, handleProps } = useReorder(setup.roster.length, onMovePlayer);
+  const { dragIndex, rowStyle, seatNumber, handleProps } = useReorder(
+    setup.roster.length,
+    onMovePlayer,
+  );
 
   // Checked on every keystroke so an over-long or duplicate name is refused at
   // the input, with a reason, instead of being silently shortened on submit.
@@ -110,6 +113,7 @@ export function SetupScreen({
                 className="roster-item"
                 key={name}
                 data-dragging={dragIndex === index ? "yes" : "no"}
+                style={rowStyle(index)}
               >
                 <span
                   className="roster-grip"
@@ -120,7 +124,7 @@ export function SetupScreen({
                 >
                   &#8942;&#8942;
                 </span>
-                <span className="roster-seat">{index + 1}</span>
+                <span className="roster-seat">{seatNumber(index)}</span>
                 <span className="roster-name">{name}</span>
                 <button
                   type="button"

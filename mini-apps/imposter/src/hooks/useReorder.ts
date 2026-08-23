@@ -1,14 +1,19 @@
 import { useCallback, useRef, useState } from "react";
+import type { CSSProperties } from "react";
 
 interface Reorder {
-  /** Index currently being dragged, or null when nothing is in hand. */
+  /** Index of the row in hand, or null when nothing is being dragged. */
   dragIndex: number | null;
+  /** Inline transform for the row at `index` — drives all of the motion. */
+  rowStyle: (index: number) => CSSProperties;
+  /** 1-based seat the row at `index` currently *appears* to occupy. */
+  seatNumber: (index: number) => number;
   /** Spread onto the drag handle of the row at `index`. */
   handleProps: (index: number) => {
     onPointerDown: (event: React.PointerEvent<HTMLElement>) => void;
     onPointerMove: (event: React.PointerEvent<HTMLElement>) => void;
     onPointerUp: (event: React.PointerEvent<HTMLElement>) => void;
-    onPointerCancel: () => void;
+    onPointerCancel: (event: React.PointerEvent<HTMLElement>) => void;
     onKeyDown: (event: React.KeyboardEvent<HTMLElement>) => void;
   };
 }
@@ -18,12 +23,14 @@ interface Reorder {
  * drag-and-drop — `dragstart` never fires from a touch, and this runs on a
  * phone.
  *
- * The move is committed as soon as the finger crosses the neighbouring row's
- * midpoint, rather than being previewed and applied on release. That keeps the
- * list in its real order at all times, so there is no separate "where would
- * this land" model to render or to get out of step with the data.
+ * The list is NOT reordered while the finger is down. Instead the row in hand
+ * follows the pointer, and the rows it displaces slide out of its way by one
+ * row height each; the actual move is committed once, on release. Reordering
+ * the data live instead would be cheaper, but there is then nothing on screen
+ * that moves continuously, so a drag reads as an unexplained jump — the list
+ * changes without ever having shown the change happening.
  *
- * Arrow keys on the handle move the row too. A drag-only affordance is
+ * Arrow keys on the handle move a row immediately. A drag-only affordance is
  * unusable without a pointer, and the handle is already focusable.
  */
 export function useReorder(
@@ -31,55 +38,115 @@ export function useReorder(
   onMove: (from: number, to: number) => void,
 ): Reorder {
   const [dragIndex, setDragIndex] = useState<number | null>(null);
-  // Pointer Y that the current row position was measured from; it is re-based
-  // by one row every time a move commits, so held drags keep tracking.
-  const originY = useRef(0);
+  const [offset, setOffset] = useState(0);
+  const startY = useRef(0);
   const rowHeight = useRef(48);
   const indexRef = useRef<number | null>(null);
 
-  const stop = useCallback(() => {
-    indexRef.current = null;
-    setDragIndex(null);
-  }, []);
+  /** Where the dragged row would land if released now. */
+  const previewIndex =
+    dragIndex === null
+      ? null
+      : Math.min(
+          length - 1,
+          Math.max(0, dragIndex + Math.round(offset / rowHeight.current)),
+        );
+
+  /**
+   * How far the row at `index` has been displaced, in whole rows. The dragged
+   * row is handled separately: it tracks the pointer, not the grid.
+   */
+  const shiftOf = useCallback(
+    (index: number): number => {
+      if (dragIndex === null || previewIndex === null) return 0;
+      if (index === dragIndex) return 0;
+      if (dragIndex < previewIndex && index > dragIndex && index <= previewIndex) {
+        return -1;
+      }
+      if (dragIndex > previewIndex && index < dragIndex && index >= previewIndex) {
+        return 1;
+      }
+      return 0;
+    },
+    [dragIndex, previewIndex],
+  );
+
+  const rowStyle = useCallback(
+    (index: number): CSSProperties => {
+      if (index === dragIndex) {
+        return {
+          transform: `translateY(${String(offset)}px) scale(1.02)`,
+          // No easing on the held row: it must sit under the finger exactly.
+          transition: "none",
+          zIndex: 2,
+        };
+      }
+      const shift = shiftOf(index);
+      if (shift === 0) return {};
+      return { transform: `translateY(${String(shift * rowHeight.current)}px)` };
+    },
+    [dragIndex, offset, shiftOf],
+  );
+
+  const seatNumber = useCallback(
+    (index: number): number => {
+      if (dragIndex === null || previewIndex === null) return index + 1;
+      if (index === dragIndex) return previewIndex + 1;
+      return index + shiftOf(index) + 1;
+    },
+    [dragIndex, previewIndex, shiftOf],
+  );
+
+  const finish = useCallback(
+    (commit: boolean) => {
+      const from = indexRef.current;
+      if (commit && from !== null) {
+        const to = Math.min(
+          length - 1,
+          Math.max(0, from + Math.round(offset / rowHeight.current)),
+        );
+        if (to !== from) onMove(from, to);
+      }
+      indexRef.current = null;
+      setDragIndex(null);
+      setOffset(0);
+    },
+    [length, offset, onMove],
+  );
 
   const handleProps = useCallback(
     (index: number) => ({
       onPointerDown: (event: React.PointerEvent<HTMLElement>) => {
         const row = event.currentTarget.closest("li");
-        if (row) rowHeight.current = row.getBoundingClientRect().height + 6;
-        originY.current = event.clientY;
+        if (row) {
+          const style = window.getComputedStyle(row);
+          const gap = Number.parseFloat(style.marginBottom) || 6;
+          rowHeight.current = row.getBoundingClientRect().height + gap;
+        }
+        startY.current = event.clientY;
         indexRef.current = index;
         setDragIndex(index);
-        // Keep receiving moves even when the finger leaves the handle.
+        setOffset(0);
+        // Keep receiving moves once the finger leaves the handle.
         event.currentTarget.setPointerCapture(event.pointerId);
       },
 
       onPointerMove: (event: React.PointerEvent<HTMLElement>) => {
-        const from = indexRef.current;
-        if (from === null) return;
-        const dy = event.clientY - originY.current;
-        const threshold = rowHeight.current * 0.6;
-        if (dy > threshold && from < length - 1) {
-          onMove(from, from + 1);
-          indexRef.current = from + 1;
-          setDragIndex(from + 1);
-          originY.current += rowHeight.current;
-        } else if (dy < -threshold && from > 0) {
-          onMove(from, from - 1);
-          indexRef.current = from - 1;
-          setDragIndex(from - 1);
-          originY.current -= rowHeight.current;
-        }
+        if (indexRef.current === null) return;
+        setOffset(event.clientY - startY.current);
       },
 
       onPointerUp: (event: React.PointerEvent<HTMLElement>) => {
         if (event.currentTarget.hasPointerCapture(event.pointerId)) {
           event.currentTarget.releasePointerCapture(event.pointerId);
         }
-        stop();
+        finish(true);
       },
 
-      onPointerCancel: stop,
+      // A cancelled pointer is not a decision, so the row goes back.
+      onPointerCancel: () => {
+        finish(false);
+      },
 
       onKeyDown: (event: React.KeyboardEvent<HTMLElement>) => {
         if (event.key === "ArrowUp" && index > 0) {
@@ -91,8 +158,8 @@ export function useReorder(
         }
       },
     }),
-    [length, onMove, stop],
+    [finish, length, onMove],
   );
 
-  return { dragIndex, handleProps };
+  return { dragIndex, rowStyle, seatNumber, handleProps };
 }
