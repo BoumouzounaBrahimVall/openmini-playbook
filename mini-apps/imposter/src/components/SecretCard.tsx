@@ -5,34 +5,33 @@ interface SecretCardProps {
 }
 
 /**
- * The one and only renderer of a dealt secret.
+ * The white slip that appears on the player's card while they hold it.
  *
- * Both roles go through this exact markup and these exact classes: the same
- * three lines, in the same order, at the same type scale, inside the same
- * fixed-height frame. Nothing is conditional except the strings themselves,
- * so an imposter screen and a crew screen are indistinguishable from across
- * a table — the leak this app exists to prevent.
+ * Both roles render the same box, in the same place, at the same size — only
+ * the text inside it differs. The imposter's text is red, deliberately: the
+ * player asked for a colour they can recognise without reading, so an imposter
+ * glancing down knows their role in the quarter-second they have.
  *
- * The drawn category is deliberately not among the strings.
+ * That is a knowing trade against the "layout-identical" rule this component
+ * used to enforce — red is legible from further away than black, so a shoulder
+ * surfer learns more from a glance than they used to. The box geometry is still
+ * shared so the silhouette matches; only the colour separates the roles.
+ *
+ * The drawn category is not among the strings, in either branch.
  */
 export function SecretCard({ secret }: SecretCardProps) {
-  // The two labels are equalised by measurement, not by eye: "You are the
-  // imposter" and "You are the crewmate" are both 4 words and both 20
-  // characters, so the role line renders at the same width either way and its
-  // silhouette tells a bystander nothing from two feet. `.secret-role` also
-  // reserves a fixed one-line height, so no rewording can make this line take
-  // more vertical space for one role. Re-count both strings before editing.
-  const role = secret.imposter
-    ? "You are the imposter"
-    : "You are the crewmate";
-  // Exactly one of `hint` and `word` is set; whichever it is takes the same slot.
-  const text = secret.imposter ? secret.hint : secret.word;
+  if (secret.imposter) {
+    return (
+      <div className="slip slip-imposter">
+        <span className="slip-role">You are the imposter!</span>
+        <strong className="slip-word">{secret.hint ?? ""}</strong>
+      </div>
+    );
+  }
 
   return (
-    <div className="secret">
-      <span className="secret-role">{role}</span>
-      <strong className="secret-text">{text ?? ""}</strong>
-      <span className="secret-note">Let go to pass the phone on</span>
+    <div className="slip">
+      <strong className="slip-word">{secret.word ?? ""}</strong>
     </div>
   );
 }

@@ -7,101 +7,107 @@ interface PassLoopProps {
   round: Round;
   /** Whose turn it is — index into `round.players` / `round.secrets`. */
   index: number;
-  /** Called on a deliberate release; the last player ends the pass loop. */
+  /** Called when this player deliberately hands the phone on. */
   onPassedOn: () => void;
 }
 
 /**
- * The per-player gate, in two steps.
+ * Card colours, cycled by seat rather than drawn, so the colour a player gets
+ * carries no information about their role. Two adjacent players never share one.
+ */
+const CARD_TINTS = [
+  "cyan",
+  "pink",
+  "yellow",
+  "mint",
+  "lilac",
+  "peach",
+] as const;
+
+/**
+ * One player's card.
  *
- * Step 1 names the player before anything is revealed, so nobody burns someone
- * else's turn. Step 2 is a press-and-hold pad: the secret exists on screen only
- * while the pointer is down, so the phone can never be handed over showing it.
+ * The card names its owner before anything is revealed, so nobody burns someone
+ * else's turn. Holding it shows the secret; letting go hides it again. The
+ * secret exists on screen only while the pointer is down, which is what stops
+ * the phone ever being handed over showing a word.
  *
- * Lifting the finger off the pad is read as "done" — it hides the secret *and*
- * advances to the next player, so there is no "hide" button anyone can forget.
- * Anything that is not a deliberate lift — a system gesture cancelling the
- * pointer, the finger sliding off the pad, the app losing focus, the tab going
- * hidden — hides the secret but leaves this player's turn open, so a phone call
- * mid-peek does not cost them the round. Once they have passed on, `index` has
- * moved and their secret is unreachable.
+ * Releasing does NOT advance — it just hides. Advancing is a separate, explicit
+ * "Next player" tap that only appears once this player has looked at least once.
+ * That means a player can re-read their secret as often as they like while it is
+ * still their turn, and cannot skip a player who has not looked yet. Once the
+ * turn moves on, `index` changes and the previous secret is unreachable.
  */
 export function PassLoop({ round, index, onPassedOn }: PassLoopProps) {
-  const [armed, setArmed] = useState(false);
   const [holding, setHolding] = useState(false);
+  const [peeked, setPeeked] = useState(false);
   const player = round.players[index];
   const secret = round.secrets[index];
+  const tint = CARD_TINTS[index % CARD_TINTS.length];
 
-  // A new player's turn always restarts at step 1 with nothing on screen.
+  // Every new turn starts face-down, with the pass button withheld again.
   useEffect(() => {
-    setArmed(false);
     setHolding(false);
+    setPeeked(false);
   }, [index]);
 
-  /** Hide the secret but keep the turn: the peek was interrupted, not finished. */
-  const abandonHold = useCallback(() => {
+  const release = useCallback(() => {
     setHolding(false);
   }, []);
 
-  /** Hide the secret and hand the phone on: the peek finished deliberately. */
-  const finishHold = useCallback(() => {
-    setHolding(false);
-    onPassedOn();
-  }, [onPassedOn]);
+  const grab = useCallback(() => {
+    setHolding(true);
+    setPeeked(true);
+  }, []);
 
-  // A backgrounded or unfocused app must never be left with a secret up. This
-  // is the interrupted path: it keeps the turn, unlike `finishHold`.
-  useHoldGuard(holding, abandonHold);
+  // Losing the foreground counts as letting go: a pocketed phone must never be
+  // left holding a secret open.
+  useHoldGuard(holding, release);
 
-  if (!armed) {
-    return (
-      <main className="pass">
-        <p className="pass-step">
-          Player {index + 1} of {round.players.length}
-        </p>
-        <h2 className="pass-name">Pass the phone to {player}</h2>
-        <button
-          type="button"
-          className="btn btn-primary btn-wide"
-          onClick={() => setArmed(true)}
-        >
-          I&#8217;m {player}
-        </button>
-        <p className="hint">Nobody else should be looking.</p>
-      </main>
-    );
-  }
+  const isLast = index + 1 >= round.players.length;
 
   return (
     <main className="pass">
-      <p className="pass-step">{player}</p>
-      <h2 className="pass-name">Hold to see your secret</h2>
-      <button
-        type="button"
-        className="hold-pad"
+      <div
+        className="card"
+        data-tint={tint}
+        data-holding={holding ? "yes" : "no"}
+        role="button"
+        tabIndex={0}
         aria-label={`Hold to see ${player}'s secret`}
-        onPointerDown={() => setHolding(true)}
-        onPointerUp={() => {
-          if (holding) finishHold();
-        }}
-        onPointerCancel={abandonHold}
-        onPointerLeave={abandonHold}
+        onPointerDown={grab}
+        onPointerUp={release}
+        onPointerCancel={release}
+        onPointerLeave={release}
         onContextMenu={(event) => event.preventDefault()}
       >
-        <span className="hold-pad-label">Hold</span>
-      </button>
-      <p className="hint">
-        Letting go hides it and passes the phone on
-        {index + 1 < round.players.length
-          ? ` to ${round.players[index + 1]}.`
-          : "."}
-      </p>
+        <span className="card-name">{player}</span>
 
-      {holding ? (
-        <div className="secret-stage">
+        {holding ? (
           <SecretCard secret={secret} />
-        </div>
-      ) : null}
+        ) : (
+          <>
+            <p className="card-warn">Do not tell the word to other players.</p>
+            <span className="card-face" aria-hidden="true" />
+            <span className="card-hold">Hold to reveal</span>
+          </>
+        )}
+      </div>
+
+      {peeked && !holding ? (
+        <button
+          type="button"
+          className="pass-next"
+          onClick={onPassedOn}
+        >
+          <span aria-hidden="true">&#9654;&#124;</span>
+          {isLast ? "Everyone has looked" : "Next player"}
+        </button>
+      ) : (
+        <p className="pass-step">
+          Player {index + 1} of {round.players.length}
+        </p>
+      )}
     </main>
   );
 }

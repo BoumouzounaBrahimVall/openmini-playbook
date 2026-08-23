@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useReorder } from "../hooks/useReorder.js";
 import {
   MAX_PLAYERS,
   validateNewName,
@@ -21,6 +22,7 @@ interface SetupScreenProps {
   drawRejection: SetupRejection | null;
   onAddPlayer: (name: string) => SetupRejection | null;
   onRemovePlayer: (index: number) => void;
+  onMovePlayer: (from: number, to: number) => void;
   onToggleCategory: (id: CategoryId) => void;
   onToggleLevel: (level: Level) => void;
   onStart: () => void;
@@ -40,11 +42,18 @@ export function SetupScreen({
   drawRejection,
   onAddPlayer,
   onRemovePlayer,
+  onMovePlayer,
   onToggleCategory,
   onToggleLevel,
   onStart,
 }: SetupScreenProps) {
   const [draft, setDraft] = useState("");
+  // Roster order is the order the phone goes round the table, so it is worth
+  // being able to match it to where people are actually sitting.
+  const { dragIndex, rowStyle, seatNumber, handleProps } = useReorder(
+    setup.roster.length,
+    onMovePlayer,
+  );
 
   // Checked on every keystroke so an over-long or duplicate name is refused at
   // the input, with a reason, instead of being silently shortened on submit.
@@ -100,7 +109,22 @@ export function SetupScreen({
         {setup.roster.length > 0 ? (
           <ul className="roster">
             {setup.roster.map((name, index) => (
-              <li className="roster-item" key={`${name}-${String(index)}`}>
+              <li
+                className="roster-item"
+                key={name}
+                data-dragging={dragIndex === index ? "yes" : "no"}
+                style={rowStyle(index)}
+              >
+                <span
+                  className="roster-grip"
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Reorder ${name}. Use the arrow keys, or drag.`}
+                  {...handleProps(index)}
+                >
+                  &#8942;&#8942;
+                </span>
+                <span className="roster-seat">{seatNumber(index)}</span>
                 <span className="roster-name">{name}</span>
                 <button
                   type="button"
@@ -116,6 +140,9 @@ export function SetupScreen({
         ) : (
           <p className="hint">Everyone at the table, one name each.</p>
         )}
+        {setup.roster.length > 1 ? (
+          <p className="hint">Drag to match the order round the table.</p>
+        ) : null}
       </section>
 
       <section className="panel">
@@ -129,6 +156,9 @@ export function SetupScreen({
               aria-pressed={setup.categories.includes(id)}
               onClick={() => onToggleCategory(id)}
             >
+              <span className="chip-tick" aria-hidden="true">
+                &#10003;
+              </span>
               {CATEGORY_LABELS[id]}
             </button>
           ))}
@@ -146,6 +176,9 @@ export function SetupScreen({
               aria-pressed={setup.levels.includes(level)}
               onClick={() => onToggleLevel(level)}
             >
+              <span className="chip-tick" aria-hidden="true">
+                &#10003;
+              </span>
               {LEVEL_LABELS[level]}
             </button>
           ))}

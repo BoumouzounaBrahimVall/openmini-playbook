@@ -33,6 +33,8 @@ interface UseSession {
   /** The reason the name was refused, or `null` once it has been added. */
   addPlayer: (name: string) => SetupRejection | null;
   removePlayer: (index: number) => void;
+  /** Reorder the roster; roster order is the order the phone is passed in. */
+  movePlayer: (from: number, to: number) => void;
   toggleCategory: (id: CategoryId) => void;
   toggleLevel: (level: Level) => void;
   /** Deal a round (also the "new round" re-draw) and persist the new recents. */
@@ -111,6 +113,24 @@ export function useSession(): UseSession {
     }));
   }, []);
 
+  const movePlayer = useCallback((from: number, to: number) => {
+    setSetup((current) => {
+      if (
+        from === to ||
+        from < 0 ||
+        to < 0 ||
+        from >= current.roster.length ||
+        to >= current.roster.length
+      ) {
+        return current;
+      }
+      const roster = [...current.roster];
+      const [moved] = roster.splice(from, 1);
+      roster.splice(to, 0, moved);
+      return { ...current, roster };
+    });
+  }, []);
+
   const toggleCategory = useCallback((id: CategoryId) => {
     setSetup((current) => ({
       ...current,
@@ -143,6 +163,7 @@ export function useSession(): UseSession {
     hydrated,
     addPlayer,
     removePlayer,
+    movePlayer,
     toggleCategory,
     toggleLevel,
     deal,
