@@ -2,7 +2,7 @@
   "manifestVersion": 1,
   "id": "com.example.imposter",
   "name": "Imposter",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "runtimeVersion": ">=0.0.0",
   "permissions": ["storage", "toast"],
   "allowedDomains": []
