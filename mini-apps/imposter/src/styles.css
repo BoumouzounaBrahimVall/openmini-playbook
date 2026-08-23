@@ -569,6 +569,8 @@ body {
   padding: 28px 24px;
   border: none;
   border-radius: 28px;
+  /* The single number that sets the face-down artwork's size. */
+  --card-art: min(46%, 132px);
   background: var(--card-bg);
   color: #0d0d0f;
   text-align: center;
@@ -651,13 +653,18 @@ body {
  * in TSX so Vite emits it as an asset with no ambient module declaration —
  * this repo's tsconfig has none and no other mini-app imports an asset. */
 .card-face {
+  /* `flex: 1` keeps this box greedy so the art stays optically centred between
+   * the warning and the hold prompt. That is also why setting a `height` here
+   * does nothing: flex-grow wins on the main axis, the box grows back, and
+   * `background-size: contain` rescales the art to fill it. So the art is
+   * sized explicitly instead — tune `--card-art` on `.card`, not this box. */
   flex: 1;
   align-self: stretch;
-  min-height: 66px;
+  min-height: 84px;
   background-image: url("./card-icon.png");
   background-repeat: no-repeat;
   background-position: center;
-  background-size: contain;
+  background-size: var(--card-art) auto;
 }
 
 .card-hold {
