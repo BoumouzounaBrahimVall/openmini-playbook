@@ -1,11 +1,15 @@
 /**
- * The whole game, as one module. Setup, validation, the round draw and the
- * persistence of both live behind this single surface, because the load-bearing
- * rule -- "recently drawn words are excluded from the draw" -- spans the draw
- * and storage at once and cannot be tested through two sibling modules.
+ * The rules of the game: what a playable setup is, and how one round is dealt
+ * from the catalog. Pure — one injected port, `Random` (a trailing parameter
+ * defaulting to `Math.random`). Nothing here reads or writes storage, imports
+ * React, or touches the bridge.
  *
- * Two ports are injected: `Random` (a trailing parameter defaulting to
- * `Math.random`) and `KvStorage`. Nothing here imports React or the bridge.
+ * The sibling `store.ts` serialises the two things that outlive a round (the
+ * setup and the recent-word buffer) and depends on this module, never the other
+ * way round. The one rule that spans both -- "recently drawn words are held
+ * back from the draw" -- lives here, in `startRound`, which takes the buffer as
+ * an argument and hands the next one back; `store.ts` only persists it. Both
+ * halves are exercised together from the single `session.test.ts`.
  */
 import { CATALOG } from "../content/en/index.js";
 import {
@@ -19,12 +23,6 @@ import {
 /** Injected random source, yielding `[0, 1)` like `Math.random`. */
 export type Random = () => number;
 
-/** The slice of the host's key/value storage this module needs. */
-export interface KvStorage {
-  get(key: string): Promise<string | null>;
-  set(key: string, value: string): Promise<void>;
-}
-
 /* ---- rules, fixed for 0.1.0 ---- */
 
 export const MIN_PLAYERS = 3;
@@ -32,14 +30,6 @@ export const MAX_PLAYERS = 12;
 export const MAX_NAME_LENGTH = 24;
 /** How many recently drawn words are held back from the draw. */
 export const RECENTS_LIMIT = 30;
-
-/* ---- storage ---- */
-
-/** Versioned so a future schema change is discarded, not crashed on. */
-export const SETUP_KEY = "imposter:setup:v1";
-export const RECENTS_KEY = "imposter:recents:v1";
-/** Schema stamp inside each stored payload; a mismatch reads as stale. */
-export const SCHEMA_VERSION = 1;
 
 /* ---- setup ---- */
 
@@ -115,15 +105,14 @@ export type StartRoundResult =
   | { ok: true; round: Round; recents: readonly string[] }
   | { ok: false; rejection: SetupRejection };
 
-/** What survived a load from storage. */
-export interface PersistedSession {
-  setup: Setup;
-  recents: readonly string[];
-}
-
 /* ---- validation ---- */
 
-function normalizeName(name: string): string {
+/**
+ * The one definition of a roster name's canonical form. Exported because a
+ * restored setup has to be normalized the same way a freshly typed one is --
+ * `store.ts` applies it on the way back in from storage.
+ */
+export function normalizeName(name: string): string {
   return name.trim();
 }
 
@@ -224,8 +213,50 @@ function filterPool(pool: Catalog, setup: Setup): WordEntry[] {
   return entries;
 }
 
+/** A uniform index into `items`: the one place `random()` becomes a position. */
+function pickIndex(items: readonly unknown[], random: Random): number {
+  return Math.floor(random() * items.length);
+}
+
 function pick<T>(items: readonly T[], random: Random): T {
-  return items[Math.floor(random() * items.length)];
+  return items[pickIndex(items, random)];
+}
+
+/**
+ * The recents holdback. Words drawn recently are removed from the candidates,
+ * unless that would empty the pool -- then the buffer clears and the full pool
+ * is drawn from, so a narrow category/difficulty selection degrades to repeats
+ * instead of failing. `carried` is the buffer the next draw should build on.
+ */
+function afterHoldback(
+  candidates: readonly WordEntry[],
+  recents: readonly string[],
+): { survivors: readonly WordEntry[]; carried: readonly string[] } {
+  const held = new Set(recents);
+  const unseen = candidates.filter((entry) => !held.has(entry.word));
+  return unseen.length === 0
+    ? { survivors: candidates, carried: [] }
+    : { survivors: unseen, carried: recents };
+}
+
+/**
+ * Per-player secrets, index-aligned with `players`: the imposter gets the hint
+ * and no word, everyone else gets the word and no hint. Never the category.
+ */
+function dealSecrets(
+  players: readonly string[],
+  imposterIndex: number,
+  entry: WordEntry,
+): PlayerSecret[] {
+  return players.map((name, index) => {
+    const imposter = index === imposterIndex;
+    return {
+      name,
+      imposter,
+      word: imposter ? null : entry.word,
+      hint: imposter ? entry.hint : null,
+    };
+  });
 }
 
 /**
@@ -253,29 +284,12 @@ export function startRound(
     };
   }
 
-  // Recent words are held back. If they cover the whole filtered pool the
-  // buffer clears and the draw proceeds, so a narrow selection degrades to
-  // repeats instead of failing.
-  const held = new Set(recents);
-  const unseen = candidates.filter((entry) => !held.has(entry.word));
-  const exhausted = unseen.length === 0;
-  const survivors = exhausted ? candidates : unseen;
-  const carried = exhausted ? [] : recents;
-
+  const { survivors, carried } = afterHoldback(candidates, recents);
+  // Fixed consumption order -- word, then imposter, then starter.
   const entry = pick(survivors, random);
   const players = setup.roster.map(normalizeName);
-  const imposterIndex = Math.floor(random() * players.length);
-  const starterIndex = Math.floor(random() * players.length);
-
-  const secrets: PlayerSecret[] = players.map((name, index) => {
-    const imposter = index === imposterIndex;
-    return {
-      name,
-      imposter,
-      word: imposter ? null : entry.word,
-      hint: imposter ? entry.hint : null,
-    };
-  });
+  const imposterIndex = pickIndex(players, random);
+  const starterIndex = pickIndex(players, random);
 
   return {
     ok: true,
@@ -283,126 +297,10 @@ export function startRound(
       players,
       imposterIndices: [imposterIndex],
       starterIndex,
-      secrets,
+      secrets: dealSecrets(players, imposterIndex, entry),
       word: entry.word,
       hint: entry.hint,
     },
     recents: [...carried, entry.word].slice(-RECENTS_LIMIT),
   };
-}
-
-/* ---- persistence: only setup and recents are ever written ---- */
-
-interface StoredSetup {
-  version: number;
-  roster: string[];
-  categories: CategoryId[];
-  levels: Level[];
-}
-
-interface StoredRecents {
-  version: number;
-  words: string[];
-}
-
-export function serializeSetup(setup: Setup): string {
-  const stored: StoredSetup = {
-    version: SCHEMA_VERSION,
-    roster: [...setup.roster],
-    categories: [...setup.categories],
-    levels: [...setup.levels],
-  };
-  return JSON.stringify(stored);
-}
-
-export function serializeRecents(recents: readonly string[]): string {
-  const stored: StoredRecents = {
-    version: SCHEMA_VERSION,
-    words: recents.slice(-RECENTS_LIMIT),
-  };
-  return JSON.stringify(stored);
-}
-
-/** Stored strings are untrusted input; anything unprovable reads as absent. */
-function readPayload(raw: string | null): Record<string, unknown> | null {
-  if (raw === null) return null;
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(raw);
-  } catch {
-    return null;
-  }
-  if (typeof parsed !== "object" || parsed === null) return null;
-  const payload = parsed as Record<string, unknown>;
-  if (payload.version !== SCHEMA_VERSION) return null;
-  return payload;
-}
-
-function isNonEmptyString(value: unknown): value is string {
-  return typeof value === "string" && value.trim().length > 0;
-}
-
-function isCategoryId(value: unknown): value is CategoryId {
-  return CATEGORY_IDS.some((id) => id === value);
-}
-
-function isLevel(value: unknown): value is Level {
-  return value === 1 || value === 2 || value === 3;
-}
-
-/** Total: corrupt, truncated and stale-schema payloads give DEFAULT_SETUP. */
-export function parseSetup(raw: string | null): Setup {
-  const payload = readPayload(raw);
-  if (payload === null) return DEFAULT_SETUP;
-  const { roster, categories, levels } = payload;
-  if (
-    !Array.isArray(roster) ||
-    !roster.every(isNonEmptyString) ||
-    !Array.isArray(categories) ||
-    !categories.every(isCategoryId) ||
-    !Array.isArray(levels) ||
-    !levels.every(isLevel)
-  ) {
-    return DEFAULT_SETUP;
-  }
-  return {
-    roster: roster.map(normalizeName),
-    // Deduplicated and re-ordered from the source of truth rather than trusted.
-    categories: CATEGORY_IDS.filter((id) => categories.includes(id)),
-    levels: ([1, 2, 3] as const).filter((level) => levels.includes(level)),
-  };
-}
-
-/** Total: corrupt, truncated and stale-schema payloads give an empty buffer. */
-export function parseRecents(raw: string | null): readonly string[] {
-  const payload = readPayload(raw);
-  if (payload === null) return [];
-  const { words } = payload;
-  if (!Array.isArray(words) || !words.every(isNonEmptyString)) return [];
-  return [...new Set(words)].slice(-RECENTS_LIMIT);
-}
-
-/** Read both persisted keys. Never throws on the stored data itself. */
-export async function loadSession(
-  storage: KvStorage,
-): Promise<PersistedSession> {
-  const [setupRaw, recentsRaw] = await Promise.all([
-    storage.get(SETUP_KEY),
-    storage.get(RECENTS_KEY),
-  ]);
-  return { setup: parseSetup(setupRaw), recents: parseRecents(recentsRaw) };
-}
-
-export async function saveSetup(
-  storage: KvStorage,
-  setup: Setup,
-): Promise<void> {
-  await storage.set(SETUP_KEY, serializeSetup(setup));
-}
-
-export async function saveRecents(
-  storage: KvStorage,
-  recents: readonly string[],
-): Promise<void> {
-  await storage.set(RECENTS_KEY, serializeRecents(recents));
 }

@@ -42,3 +42,13 @@ export const CATEGORY_LABELS: Record<CategoryId, string> = {
   jobs: "Jobs",
   objects: "Objects",
 };
+
+/** Every difficulty tier, in the order they are offered on the setup screen. */
+export const LEVEL_IDS: readonly Level[] = [1, 2, 3];
+
+/** Display name for each difficulty tier. Tier 3 is opt-in on setup. */
+export const LEVEL_LABELS: Record<Level, string> = {
+  1: "Easy",
+  2: "Medium",
+  3: "Hard",
+};

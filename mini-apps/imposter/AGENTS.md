@@ -36,6 +36,10 @@ field, or packaging step:
 - `npx mini inspect <file.mpkg>` — validate a package and print its summary
 - `npx mini publish [package] --registry <dir | s3://bucket[/prefix]>` —
   publish to a registry
+- `node scripts/generate-icon.mjs` — regenerate `icon.png` from scratch. Run
+  from this directory. Zero npm dependencies and byte-for-byte deterministic,
+  so re-running it on an unchanged script produces no diff; the design lives in
+  the script's header comment. Never hand-edit `icon.png`.
 
 ## Bridge surface (v1 — FROZEN)
 

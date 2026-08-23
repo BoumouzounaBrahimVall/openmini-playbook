@@ -16,11 +16,15 @@ interface SecretCardProps {
  * The drawn category is deliberately not among the strings.
  */
 export function SecretCard({ secret }: SecretCardProps) {
-  // Both labels are deliberately the same shape and length, so the role line
-  // itself gives nothing away to someone reading the silhouette from two feet.
+  // The two labels are equalised by measurement, not by eye: "You are the
+  // imposter" and "You are the crewmate" are both 4 words and both 20
+  // characters, so the role line renders at the same width either way and its
+  // silhouette tells a bystander nothing from two feet. `.secret-role` also
+  // reserves a fixed one-line height, so no rewording can make this line take
+  // more vertical space for one role. Re-count both strings before editing.
   const role = secret.imposter
     ? "You are the imposter"
-    : "You are one of the crew";
+    : "You are the crewmate";
   // Exactly one of `hint` and `word` is set; whichever it is takes the same slot.
   const text = secret.imposter ? secret.hint : secret.word;
 

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { SecretCard } from "./SecretCard.js";
+import { useHoldGuard } from "../hooks/useHoldGuard.js";
 import type { Round } from "../session/session.js";
 
 interface PassLoopProps {
@@ -48,19 +49,9 @@ export function PassLoop({ round, index, onPassedOn }: PassLoopProps) {
     onPassedOn();
   }, [onPassedOn]);
 
-  // A backgrounded or unfocused app must never be left with a secret up.
-  useEffect(() => {
-    if (!holding) return;
-    const onVisibility = () => {
-      if (document.visibilityState === "hidden") abandonHold();
-    };
-    window.addEventListener("blur", abandonHold);
-    document.addEventListener("visibilitychange", onVisibility);
-    return () => {
-      window.removeEventListener("blur", abandonHold);
-      document.removeEventListener("visibilitychange", onVisibility);
-    };
-  }, [holding, abandonHold]);
+  // A backgrounded or unfocused app must never be left with a secret up. This
+  // is the interrupted path: it keeps the turn, unlike `finishHold`.
+  useHoldGuard(holding, abandonHold);
 
   if (!armed) {
     return (

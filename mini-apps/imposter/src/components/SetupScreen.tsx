@@ -9,16 +9,11 @@ import {
 import {
   CATEGORY_IDS,
   CATEGORY_LABELS,
+  LEVEL_IDS,
+  LEVEL_LABELS,
   type CategoryId,
   type Level,
 } from "../content/types.js";
-
-/** The difficulty control, in tier order. Tier 3 is opt-in. */
-const LEVELS: ReadonlyArray<[Level, string]> = [
-  [1, "Easy"],
-  [2, "Medium"],
-  [3, "Hard"],
-];
 
 interface SetupScreenProps {
   setup: Setup;
@@ -143,7 +138,7 @@ export function SetupScreen({
       <section className="panel">
         <h2 className="panel-title">Difficulty</h2>
         <div className="chips">
-          {LEVELS.map(([level, label]) => (
+          {LEVEL_IDS.map((level) => (
             <button
               key={level}
               type="button"
@@ -151,7 +146,7 @@ export function SetupScreen({
               aria-pressed={setup.levels.includes(level)}
               onClick={() => onToggleLevel(level)}
             >
-              {label}
+              {LEVEL_LABELS[level]}
             </button>
           ))}
         </div>

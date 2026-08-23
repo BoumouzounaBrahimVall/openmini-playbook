@@ -450,9 +450,13 @@ body {
   pointer-events: none;
 }
 
-/* Fixed frame shared by both roles: a one-word crew secret and a seven-word
- * imposter hint occupy the same box, at the same type scale, with the same
- * lines above and below. Nothing here may be made conditional on the role. */
+/* Fixed frame shared by both roles. Both secrets are a single catalog entry --
+ * a crew word and a one-word imposter hint -- but they do not fill the same
+ * number of lines: a long multi-word word ("Air Traffic Controller") wraps to
+ * three lines at this type scale while a one-word hint ("spiral") sits on one.
+ * So the box is sized to the tallest case unconditionally, and both roles get
+ * the same box, the same type scale and the same lines above and below.
+ * Nothing here may be made conditional on the role. */
 
 .secret {
   width: 100%;
@@ -467,6 +471,12 @@ body {
 }
 
 .secret-role {
+  /* One line's worth of space, reserved whatever the wording. The two labels
+   * are already equalised in SecretCard.tsx (4 words / 20 chars each); this
+   * floor is the second lock on the same door. Without it, a future label long
+   * enough to wrap would make the card taller for one role only -- exactly the
+   * silhouette tell the equalising exists to close. */
+  min-height: 1.3em;
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.11em;

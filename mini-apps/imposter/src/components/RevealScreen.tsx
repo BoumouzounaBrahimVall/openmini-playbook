@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useHoldGuard } from "../hooks/useHoldGuard.js";
 import type { Round } from "../session/session.js";
 
 /** How long the answer pad has to be held. Long enough that a mis-tap fails. */
@@ -47,18 +48,7 @@ export function RevealScreen({
 
   // Losing focus mid-hold counts as letting go, so a pocketed phone cannot
   // finish the hold on its own.
-  useEffect(() => {
-    if (!holding) return;
-    const onVisibility = () => {
-      if (document.visibilityState === "hidden") cancelHold();
-    };
-    window.addEventListener("blur", cancelHold);
-    document.addEventListener("visibilitychange", onVisibility);
-    return () => {
-      window.removeEventListener("blur", cancelHold);
-      document.removeEventListener("visibilitychange", onVisibility);
-    };
-  }, [holding, cancelHold]);
+  useHoldGuard(holding, cancelHold);
 
   if (!revealed) {
     return (

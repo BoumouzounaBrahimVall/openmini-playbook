@@ -9,21 +9,27 @@ import {
 import {
   DEFAULT_SETUP,
   MAX_NAME_LENGTH,
-  RECENTS_KEY,
   RECENTS_LIMIT,
-  SETUP_KEY,
-  loadSession,
-  saveRecents,
-  saveSetup,
   startRound,
   validateNewName,
   validateSetup,
-  type KvStorage,
   type Random,
   type Round,
   type SetupProblem,
   type Setup,
 } from "./session.js";
+// The rules and their persistence were split into two modules; the assertions
+// deliberately were not. Everything below stays in one file because the
+// load-bearing behaviour -- a drawn word being held back from the next draw --
+// crosses the seam and is only meaningfully tested end to end.
+import {
+  RECENTS_KEY,
+  SETUP_KEY,
+  loadSession,
+  saveRecents,
+  saveSetup,
+  type KvStorage,
+} from "./store.js";
 
 /** Deterministic random: always the first survivor / the first player. */
 const first: Random = () => 0;

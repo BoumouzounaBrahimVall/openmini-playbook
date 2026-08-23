@@ -2,16 +2,18 @@ import { mini } from "@openmini/runtime";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   DEFAULT_SETUP,
-  loadSession,
-  saveRecents,
-  saveSetup,
   startRound,
   validateNewName,
-  type KvStorage,
   type Setup,
   type SetupRejection,
   type StartRoundResult,
 } from "./session.js";
+import {
+  loadSession,
+  saveRecents,
+  saveSetup,
+  type KvStorage,
+} from "./store.js";
 import type { CategoryId, Level } from "../content/types.js";
 
 /**
@@ -89,10 +91,16 @@ export function useSession(): UseSession {
   }, []);
 
   const addPlayer = useCallback((name: string): SetupRejection | null => {
-    const current = setupRef.current;
-    const rejection = validateNewName(current.roster, name);
+    // The ref is read only to answer the caller synchronously with a rejection;
+    // the write itself goes through the updater, like every sibling here, so it
+    // cannot be built on a roster that has already moved on.
+    const rejection = validateNewName(setupRef.current.roster, name);
     if (rejection) return rejection;
-    setSetup({ ...current, roster: [...current.roster, name.trim()] });
+    const trimmed = name.trim();
+    setSetup((current) => ({
+      ...current,
+      roster: [...current.roster, trimmed],
+    }));
     return null;
   }, []);
 

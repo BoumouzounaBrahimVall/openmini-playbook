@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { CATALOG } from "./en/index.js";
-import { CATEGORY_IDS, type CategoryId, type WordEntry } from "./types.js";
+import {
+  CATEGORY_IDS,
+  LEVEL_IDS,
+  type CategoryId,
+  type WordEntry,
+} from "./types.js";
 
 /**
  * Seam 2 is a data contract, not a code seam: 1000 hand-authored entries whose
@@ -15,8 +20,6 @@ const ENTRIES_PER_CATEGORY = 200;
 
 /** The easiest difficulty must never starve, so tier 1 has a floor. */
 const MIN_TIER_ONE_ENTRIES = 40;
-
-const ALLOWED_LEVELS: readonly number[] = [1, 2, 3];
 
 /**
  * Words that name one of the five categories (or the generic nouns a category
@@ -138,7 +141,7 @@ describe("entry fields", () => {
 
   it.each(CATEGORY_IDS)("%s tiers every entry at level 1, 2 or 3", (id) => {
     const offenders = CATALOG[id]
-      .filter((entry) => !ALLOWED_LEVELS.includes(entry.level))
+      .filter((entry) => !LEVEL_IDS.includes(entry.level))
       .map((entry) => `${label(id, entry)} (level ${String(entry.level)})`);
     expect(offenders).toEqual([]);
   });
