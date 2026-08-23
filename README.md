@@ -15,7 +15,8 @@ openmini-playbook/
 ├── mini-apps/            # one folder per mini-app (plain React + Vite + @openmini/runtime)
 │   ├── game-2048/        # com.example.game2048  - swipe tiles, reach 2048
 │   ├── game-snake/       # com.example.gamesnake - arrows / D-pad snake
-│   └── pomodoro/         # com.example.pomodoro  - focus timer with breaks
+│   ├── pomodoro/         # com.example.pomodoro  - focus timer with breaks
+│   └── imposter/         # com.example.imposter  - pass-and-play secret word party game
 ├── registery/            # static registry + catalog endpoint
 │   ├── server.js         # zero-dependency Node static server (CORS, PORT env, default 8300)
 │   └── public/           # the served root:

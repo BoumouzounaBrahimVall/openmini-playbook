@@ -1,0 +1,15 @@
+{
+  "registryVersion": 1,
+  "id": "com.example.imposter",
+  "name": "Imposter",
+  "latest": "0.1.0",
+  "versions": {
+    "0.1.0": {
+      "package": "0.1.0/app.mpkg",
+      "sha256": "dbea2adecd355d34d5253a6dbcf1111bea056e401eadc3e2a1fd9ed14679a50f",
+      "size": 84388,
+      "runtimeVersion": "0.1.3",
+      "publishedAt": "2026-08-23T14:37:12.434Z"
+    }
+  }
+}

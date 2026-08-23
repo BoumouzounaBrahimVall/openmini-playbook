@@ -1,0 +1,572 @@
+:root {
+  --bg: #f5f3ee;
+  --fg: #211e1a;
+  --muted: #6d675f;
+  --header-bg: #ffffff;
+  --header-fg: #1a1a1a;
+  --panel-bg: #ffffff;
+  --panel-border: rgba(0, 0, 0, 0.09);
+  --field-bg: #f0eee8;
+  --chip-bg: #eceae3;
+  --chip-fg: #3a352f;
+  --accent: #6b4fc4;
+  --accent-fg: #ffffff;
+  --danger: #b3261e;
+  --capsule-border: rgba(0, 0, 0, 0.1);
+
+  --pad-size: min(64vw, 236px);
+  --hold-ms: 1000ms;
+}
+
+:root[data-theme="dark"] {
+  --bg: #17161a;
+  --fg: #ece9e4;
+  --muted: #99938c;
+  --header-bg: #201e24;
+  --header-fg: #f2efea;
+  --panel-bg: #201e24;
+  --panel-border: rgba(255, 255, 255, 0.12);
+  --field-bg: #2a272f;
+  --chip-bg: #2a272f;
+  --chip-fg: #ece9e4;
+  --accent: #8f74e8;
+  --accent-fg: #14121a;
+  --danger: #f2b8b5;
+  --capsule-border: rgba(255, 255, 255, 0.18);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui,
+    sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+  overscroll-behavior: none;
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ---- mobile screen shell ---- */
+
+.screen {
+  height: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  color: var(--fg);
+}
+
+/* ---- force-dark secrecy screens ----
+ * Deliberately OUTSIDE any [data-theme] selector, so a host running in light
+ * mode cannot lighten these two screens: a full-brightness phone in a dim room
+ * is readable from several feet away and lights the holder's face. This is a
+ * leak fix, not a style, and it wins over matching the host.
+ * The 100vmax box-shadow bleeds the dark ground past the 480px shell so a wide
+ * host window shows no bright letterboxing either. */
+
+.screen[data-screen="pass"],
+.screen[data-screen="reveal"] {
+  --bg: #08070b;
+  --fg: #f4f2ef;
+  --muted: #8a847e;
+  --header-bg: #08070b;
+  --header-fg: #f4f2ef;
+  --panel-bg: #16151b;
+  --panel-border: rgba(255, 255, 255, 0.1);
+  --field-bg: #16151b;
+  --chip-bg: #16151b;
+  --chip-fg: #f4f2ef;
+  --accent: #4a3f6b;
+  --accent-fg: #f4f2ef;
+  --danger: #f2b8b5;
+  --capsule-border: rgba(255, 255, 255, 0.14);
+  box-shadow: 0 0 0 100vmax var(--bg);
+}
+
+.app-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  height: 48px;
+  padding-top: env(safe-area-inset-top, 0px);
+  background: var(--header-bg);
+  color: var(--header-fg);
+  box-shadow: 0 1px 0 var(--capsule-border);
+}
+
+.app-header-title {
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.capsule {
+  position: absolute;
+  right: 12px;
+  top: calc(env(safe-area-inset-top, 0px) + 8px);
+  display: flex;
+  align-items: center;
+  height: 32px;
+  border: 1px solid var(--capsule-border);
+  border-radius: 16px;
+  background: var(--header-bg);
+  overflow: hidden;
+}
+
+.capsule-btn {
+  width: 44px;
+  height: 100%;
+  border: none;
+  background: transparent;
+  color: var(--header-fg);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.capsule-btn:active {
+  background: var(--capsule-border);
+}
+
+.capsule-divider {
+  width: 1px;
+  height: 18px;
+  background: var(--capsule-border);
+}
+
+/* ---- shared controls ---- */
+
+.btn {
+  border: none;
+  border-radius: 10px;
+  padding: 12px 16px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--chip-bg);
+  color: var(--chip-fg);
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: var(--accent-fg);
+}
+
+.btn-quiet {
+  background: transparent;
+  color: var(--muted);
+  box-shadow: inset 0 0 0 1px var(--panel-border);
+}
+
+.btn-wide {
+  width: 100%;
+}
+
+.btn:active {
+  filter: brightness(0.92);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.hint {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.error {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--danger);
+  text-align: center;
+}
+
+/* ---- setup screen ---- */
+
+.setup {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 16px calc(env(safe-area-inset-bottom, 0px) + 16px);
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 14px;
+  background: var(--panel-bg);
+  box-shadow: inset 0 0 0 1px var(--panel-border);
+}
+
+.panel-title {
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.panel-count {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+}
+
+.name-row {
+  display: flex;
+  gap: 8px;
+}
+
+.name-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  border-radius: 10px;
+  padding: 12px;
+  font: inherit;
+  background: var(--field-bg);
+  color: var(--fg);
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.name-input:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.name-input[aria-invalid="true"] {
+  outline: 2px solid var(--danger);
+  outline-offset: -2px;
+}
+
+.roster {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.roster-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 8px 8px 12px;
+  border-radius: 10px;
+  background: var(--field-bg);
+}
+
+.roster-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.roster-remove {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.roster-remove:active {
+  background: var(--chip-bg);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  border: none;
+  border-radius: 999px;
+  padding: 9px 14px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--chip-bg);
+  color: var(--chip-fg);
+  box-shadow: inset 0 0 0 1px var(--panel-border);
+}
+
+.chip[aria-pressed="true"] {
+  background: var(--accent);
+  color: var(--accent-fg);
+  box-shadow: none;
+}
+
+.start {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 4px;
+}
+
+/* ---- pass-and-hold loop ---- */
+
+.pass,
+.ready,
+.reveal {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 16px 20px calc(env(safe-area-inset-bottom, 0px) + 24px);
+  text-align: center;
+}
+
+.pass-step {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.pass-name {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.hold-pad {
+  position: relative;
+  width: var(--pad-size);
+  height: var(--pad-size);
+  border: 2px solid var(--panel-border);
+  border-radius: 50%;
+  background: var(--panel-bg);
+  color: var(--fg);
+  font: inherit;
+  font-size: 17px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  overflow: hidden;
+  /* The hold must never be stolen by a scroll, a long-press menu or a
+   * text selection — losing the pointer mid-peek would hide the secret. */
+  touch-action: none;
+  -webkit-touch-callout: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.hold-pad:active {
+  border-color: var(--accent);
+}
+
+.hold-pad-label {
+  position: relative;
+  z-index: 1;
+}
+
+.hold-pad-fill {
+  position: absolute;
+  inset: 0;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: left center;
+}
+
+.hold-pad[data-holding="yes"] .hold-pad-fill {
+  animation: hold-fill var(--hold-ms) linear forwards;
+}
+
+@keyframes hold-fill {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+/* ---- the secret, large and alone ----
+ * A full-viewport stage covering every piece of chrome, so nothing competes
+ * with the word in the quarter-second the holder gets to read it. It is
+ * pointer-transparent so the hold pad underneath keeps the pointer, and
+ * therefore keeps control of when the secret disappears. */
+
+.secret-stage {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: var(--bg);
+  pointer-events: none;
+}
+
+/* Fixed frame shared by both roles. Both secrets are a single catalog entry --
+ * a crew word and a one-word imposter hint -- but they do not fill the same
+ * number of lines: a long multi-word word ("Air Traffic Controller") wraps to
+ * three lines at this type scale while a one-word hint ("spiral") sits on one.
+ * So the box is sized to the tallest case unconditionally, and both roles get
+ * the same box, the same type scale and the same lines above and below.
+ * Nothing here may be made conditional on the role. */
+
+.secret {
+  width: 100%;
+  max-width: 420px;
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  text-align: center;
+}
+
+.secret-role {
+  /* One line's worth of space, reserved whatever the wording. The two labels
+   * are already equalised in SecretCard.tsx (4 words / 20 chars each); this
+   * floor is the second lock on the same door. Without it, a future label long
+   * enough to wrap would make the card taller for one role only -- exactly the
+   * silhouette tell the equalising exists to close. */
+  min-height: 1.3em;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.secret-text {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Sized to the tallest secret in the catalog, not to the average one. The
+   * longest word ("Air Traffic Controller") wraps to three lines at this scale
+   * while the longest hint ("probabilistic") fits on one, so the slot reserves
+   * three lines unconditionally. A crew card that grew taller than an imposter
+   * card would be readable as a role tell from across the table, which is the
+   * whole leak this equalising exists to close. Re-measure before shrinking. */
+  min-height: 3.45em;
+  font-size: clamp(26px, 8.5vw, 40px);
+  text-wrap: balance;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  overflow-wrap: break-word;
+}
+
+.secret-note {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* ---- round-ready: silent and idle while the table argues ---- */
+
+.ready-label {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.ready-starter {
+  margin: 0;
+  font-size: clamp(30px, 9vw, 42px);
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+.ready-direction {
+  margin: 0;
+  font-size: 16px;
+  color: var(--muted);
+}
+
+.ready .btn-quiet {
+  margin-top: 32px;
+}
+
+/* ---- reveal ---- */
+
+.reveal-label {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.reveal-imposter,
+.reveal-word {
+  margin: 0;
+  font-size: clamp(28px, 8.5vw, 40px);
+  font-weight: 800;
+  line-height: 1.15;
+  overflow-wrap: break-word;
+}
+
+.reveal-hint {
+  margin: 0;
+  font-size: 15px;
+  color: var(--muted);
+}
+
+.reveal-actions {
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  max-width: 260px;
+}

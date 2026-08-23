@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        app: [game-2048, game-snake, pomodoro]
+        app: [game-2048, game-snake, pomodoro, imposter]
     defaults:
       run:
         working-directory: mini-apps/${{ matrix.app }}
