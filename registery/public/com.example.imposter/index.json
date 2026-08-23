@@ -2,7 +2,7 @@
   "registryVersion": 1,
   "id": "com.example.imposter",
   "name": "Imposter",
-  "latest": "0.1.0",
+  "latest": "0.2.0",
   "versions": {
     "0.1.0": {
       "package": "0.1.0/app.mpkg",
@@ -10,6 +10,13 @@
       "size": 84388,
       "runtimeVersion": "0.1.3",
       "publishedAt": "2026-08-23T14:37:12.434Z"
+    },
+    "0.2.0": {
+      "package": "0.2.0/app.mpkg",
+      "sha256": "899a602f0b29ff12117e6ae6a043eb2793fa51e6392aed011233869593d9c1d5",
+      "size": 329673,
+      "runtimeVersion": "0.1.3",
+      "publishedAt": "2026-08-23T15:17:22.632Z"
     }
   }
 }
