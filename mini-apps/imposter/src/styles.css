@@ -478,8 +478,15 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 3.2em;
+  /* Sized to the tallest secret in the catalog, not to the average one. The
+   * longest word ("Air Traffic Controller") wraps to three lines at this scale
+   * while the longest hint ("probabilistic") fits on one, so the slot reserves
+   * three lines unconditionally. A crew card that grew taller than an imposter
+   * card would be readable as a role tell from across the table, which is the
+   * whole leak this equalising exists to close. Re-measure before shrinking. */
+  min-height: 3.45em;
   font-size: clamp(26px, 8.5vw, 40px);
+  text-wrap: balance;
   font-weight: 800;
   line-height: 1.15;
   letter-spacing: -0.01em;
