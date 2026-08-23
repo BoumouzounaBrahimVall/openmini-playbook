@@ -17,6 +17,7 @@ export function App() {
     hydrated,
     addPlayer,
     removePlayer,
+    movePlayer,
     toggleCategory,
     toggleLevel,
     deal,
@@ -101,6 +102,7 @@ export function App() {
           drawRejection={drawRejection}
           onAddPlayer={addPlayer}
           onRemovePlayer={removePlayer}
+          onMovePlayer={movePlayer}
           onToggleCategory={toggleCategory}
           onToggleLevel={toggleLevel}
           onStart={startRound}
