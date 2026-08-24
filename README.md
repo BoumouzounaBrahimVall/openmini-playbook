@@ -63,6 +63,63 @@ npx expo run:ios                                   # or run:android
 
 To iterate on a single mini-app without the host: `cd mini-apps/<app> && npm run dev` opens it in a browser mock host.
 
+## Building a standalone Android APK
+
+`expo run:android` needs a Metro packager alive. To get an APK that runs on its own -
+JS bundle and registry URL baked in - build the release variant:
+
+```bash
+cd super-app/openmini-playbook
+npx expo prebuild --platform android --clean     # generates android/ (gitignored)
+cd android && ./gradlew assembleRelease
+# → android/app/build/outputs/apk/release/app-release.apk
+
+adb install -r app/build/outputs/apk/release/app-release.apk
+```
+
+Prerequisites: the Android SDK (`ANDROID_HOME`, e.g. `~/Library/Android/sdk`) and JDK 17+.
+
+Things worth knowing:
+
+- **Point `.env` somewhere reachable first.** `EXPO_PUBLIC_APPS_URL` is compiled into the
+  bundle, so a `localhost` value produces an APK that can only talk to the phone itself.
+  Use a LAN IP for a physical device, `http://10.0.2.2:8300` for the emulator, or a hosted
+  catalog URL for a build you hand to someone else. Same for `apps.json`'s `provider-url`.
+- **`android.package` in `app.json` is the application id** (`prebuild` requires it).
+  Android ids reject hyphens, so it can't be identical to the iOS `bundleIdentifier`.
+- **The APK is signed with the RN template's debug keystore** - fine for sideloading
+  (enable *Install unknown apps* on the phone), not publishable to the Play Store. For that,
+  add a real keystore and a `release` `signingConfig` in `android/app/build.gradle`.
+- It weighs ~66 MB because it ships native code for all four ABIs (`arm64-v8a`,
+  `armeabi-v7a`, `x86`, `x86_64`), so one file runs on any phone or emulator.
+- `android/` is generated and gitignored - `--clean` regenerates it from scratch, so keep
+  native tweaks in `app.json` / a config plugin rather than editing it by hand.
+
+A `debug` APK (`./gradlew assembleDebug`) is *not* standalone: it fetches the bundle from
+Metro at launch and red-screens with "Unable to load script" if no packager is reachable.
+
+## Dark mode
+
+Mini-apps don't guess the theme - they ask the host for it. Each one calls
+`mini.system.getInfo()` on mount and mirrors the answer onto the document
+(`document.documentElement.dataset.theme = info.theme`), which flips a
+`:root[data-theme="dark"]` block in its `styles.css`. Host-side, that value comes from
+React Native's `Appearance.getColorScheme()`, so it tracks the OS setting - provided the
+host lets it:
+
+- `userInterfaceStyle` in `app.json` must be `"automatic"`. Pinning it to `"light"` makes
+  `getColorScheme()` answer "light" forever, and *every* mini-app dutifully renders light
+  no matter what the phone is set to.
+- On Android that flag needs `expo-system-ui` installed to have any effect at all.
+- iOS bakes it into `UIUserInterfaceStyle` in `Info.plist` at prebuild time, so changing it
+  means re-running `expo prebuild` (or editing the plist) - a JS reload won't do it.
+
+The launcher's own chrome follows `useColorScheme()` via `src/theme.ts`, so a dark mini-app
+doesn't open inside a white shell.
+
+One rough edge: `getInfo()` is a one-shot read with no theme-change event in the bridge, so
+toggling the OS theme while a mini-app is open doesn't reach it until the card is reopened.
+
 ## Flow: adding a new mini-app
 
 1. **Scaffold** it inside `mini-apps/`:

@@ -14,6 +14,7 @@ import {
 } from "@openmini/react-native";
 import { asyncStorageKv } from "@openmini/react-native/async-storage";
 import type { MiniAppEntry } from "../api/launcher";
+import { useTheme } from "../theme";
 
 interface MiniAppModalProps {
   providerUrl: string;
@@ -26,6 +27,7 @@ const storage = asyncStorageKv();
 
 export function MiniAppModal({ providerUrl, app, onClose }: MiniAppModalProps) {
   const [error, setError] = useState<MiniAppError | null>(null);
+  const theme = useTheme();
 
   function close() {
     setError(null);
@@ -39,15 +41,26 @@ export function MiniAppModal({ providerUrl, app, onClose }: MiniAppModalProps) {
       presentationStyle="fullScreen"
       onRequestClose={close}
     >
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: theme.surface }]}
+      >
         {app !== null && (
           <MiniAppProvider registryUrl={providerUrl} storage={storage}>
             {error ? (
               <View style={styles.errorBox}>
-                <Text style={styles.errorTitle}>Couldn’t open {app.name}</Text>
-                <Text style={styles.errorDetail}>{error.message}</Text>
-                <Pressable style={styles.closeBtn} onPress={close}>
-                  <Text style={styles.closeLabel}>Close</Text>
+                <Text style={[styles.errorTitle, { color: theme.text }]}>
+                  Couldn’t open {app.name}
+                </Text>
+                <Text style={[styles.errorDetail, { color: theme.muted }]}>
+                  {error.message}
+                </Text>
+                <Pressable
+                  style={[styles.closeBtn, { backgroundColor: theme.accent }]}
+                  onPress={close}
+                >
+                  <Text style={[styles.closeLabel, { color: theme.onAccent }]}>
+                    Close
+                  </Text>
                 </Pressable>
               </View>
             ) : (
@@ -68,7 +81,6 @@ export function MiniAppModal({ providerUrl, app, onClose }: MiniAppModalProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
   },
   view: {
     flex: 1,
@@ -86,7 +98,6 @@ const styles = StyleSheet.create({
   },
   errorDetail: {
     fontSize: 13,
-    color: "#6e6e73",
     textAlign: "center",
   },
   closeBtn: {
@@ -94,10 +105,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 10,
-    backgroundColor: "#1f6feb",
   },
   closeLabel: {
-    color: "#fff",
     fontWeight: "600",
   },
 });
