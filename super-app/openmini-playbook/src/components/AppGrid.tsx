@@ -9,6 +9,7 @@ import {
   useWindowDimensions,
 } from "react-native";
 import type { MiniAppEntry } from "../api/launcher";
+import { useTheme } from "../theme";
 
 const COLUMNS = 4;
 const GRID_PADDING = 20;
@@ -29,6 +30,7 @@ interface AppGridProps {
 
 export function AppGrid({ apps, onOpen }: AppGridProps) {
   const size = useIconSize();
+  const theme = useTheme();
   return (
     <FlatList
       data={apps}
@@ -55,7 +57,10 @@ export function AppGrid({ apps, onOpen }: AppGridProps) {
               borderRadius: size * RADIUS_RATIO,
             }}
           />
-          <Text style={styles.label} numberOfLines={1}>
+          <Text
+            style={[styles.label, { color: theme.muted }]}
+            numberOfLines={1}
+          >
             {item.name}
           </Text>
         </Pressable>
@@ -66,6 +71,7 @@ export function AppGrid({ apps, onOpen }: AppGridProps) {
 
 export function SkeletonGrid() {
   const size = useIconSize();
+  const theme = useTheme();
   const pulse = useRef(new Animated.Value(0.45)).current;
 
   useEffect(() => {
@@ -98,12 +104,19 @@ export function SkeletonGrid() {
         <Animated.View style={[styles.cell, { width: size, opacity: pulse }]}>
           <Animated.View
             style={[
-              styles.skeletonIcon,
-              { width: size, height: size, borderRadius: size * RADIUS_RATIO },
+              {
+                width: size,
+                height: size,
+                borderRadius: size * RADIUS_RATIO,
+                backgroundColor: theme.skeleton,
+              },
             ]}
           />
           <Animated.View
-            style={[styles.skeletonLabel, { width: size * 0.7 }]}
+            style={[
+              styles.skeletonLabel,
+              { width: size * 0.7, backgroundColor: theme.skeleton },
+            ]}
           />
         </Animated.View>
       )}
@@ -130,15 +143,10 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 12,
     fontWeight: "500",
-    color: "#3a3a3c",
     maxWidth: "100%",
-  },
-  skeletonIcon: {
-    backgroundColor: "#d8d8dc",
   },
   skeletonLabel: {
     height: 10,
     borderRadius: 5,
-    backgroundColor: "#d8d8dc",
   },
 });

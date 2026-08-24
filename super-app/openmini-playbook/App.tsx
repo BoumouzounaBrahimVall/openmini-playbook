@@ -14,6 +14,7 @@ import {
 } from "./src/api/launcher";
 import { AppGrid, SkeletonGrid } from "./src/components/AppGrid";
 import { MiniAppModal } from "./src/components/MiniAppModal";
+import { useTheme } from "./src/theme";
 
 type LoadState =
   | { phase: "loading" }
@@ -21,6 +22,7 @@ type LoadState =
   | { phase: "ready"; catalog: LauncherCatalog };
 
 export default function App() {
+  const theme = useTheme();
   const [load, setLoad] = useState<LoadState>({ phase: "loading" });
   const [openApp, setOpenApp] = useState<MiniAppEntry | null>(null);
 
@@ -39,21 +41,34 @@ export default function App() {
   useEffect(refresh, [refresh]);
 
   return (
-    <SafeAreaView style={styles.screen}>
-      <StatusBar style="dark" />
+    <SafeAreaView style={[styles.screen, { backgroundColor: theme.screen }]}>
+      <StatusBar style="auto" />
       <View style={styles.header}>
-        <Text style={styles.title}>OpenMini Playbook</Text>
-        <Text style={styles.subtitle}>Your mini apps</Text>
+        <Text style={[styles.title, { color: theme.text }]}>
+          OpenMini Playbook
+        </Text>
+        <Text style={[styles.subtitle, { color: theme.muted }]}>
+          Your mini apps
+        </Text>
       </View>
 
       {load.phase === "loading" && <SkeletonGrid />}
 
       {load.phase === "error" && (
         <View style={styles.errorBox}>
-          <Text style={styles.errorTitle}>Couldn’t load your apps</Text>
-          <Text style={styles.errorDetail}>{load.message}</Text>
-          <Pressable style={styles.retryBtn} onPress={refresh}>
-            <Text style={styles.retryLabel}>Try again</Text>
+          <Text style={[styles.errorTitle, { color: theme.text }]}>
+            Couldn’t load your apps
+          </Text>
+          <Text style={[styles.errorDetail, { color: theme.muted }]}>
+            {load.message}
+          </Text>
+          <Pressable
+            style={[styles.retryBtn, { backgroundColor: theme.accent }]}
+            onPress={refresh}
+          >
+            <Text style={[styles.retryLabel, { color: theme.onAccent }]}>
+              Try again
+            </Text>
           </Pressable>
         </View>
       )}
@@ -75,7 +90,6 @@ export default function App() {
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: "#f2f2f7",
   },
   header: {
     paddingHorizontal: 20,
@@ -86,11 +100,9 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 30,
     fontWeight: "800",
-    color: "#1c1c1e",
   },
   subtitle: {
     fontSize: 14,
-    color: "#6e6e73",
   },
   errorBox: {
     flex: 1,
@@ -102,11 +114,9 @@ const styles = StyleSheet.create({
   errorTitle: {
     fontSize: 17,
     fontWeight: "600",
-    color: "#1c1c1e",
   },
   errorDetail: {
     fontSize: 13,
-    color: "#6e6e73",
     textAlign: "center",
   },
   retryBtn: {
@@ -114,10 +124,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 22,
     paddingVertical: 10,
     borderRadius: 10,
-    backgroundColor: "#1f6feb",
   },
   retryLabel: {
-    color: "#fff",
     fontWeight: "600",
   },
 });
