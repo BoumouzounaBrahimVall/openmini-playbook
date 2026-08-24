@@ -63,6 +63,41 @@ npx expo run:ios                                   # or run:android
 
 To iterate on a single mini-app without the host: `cd mini-apps/<app> && npm run dev` opens it in a browser mock host.
 
+## Building a standalone Android APK
+
+`expo run:android` needs a Metro packager alive. To get an APK that runs on its own -
+JS bundle and registry URL baked in - build the release variant:
+
+```bash
+cd super-app/openmini-playbook
+npx expo prebuild --platform android --clean     # generates android/ (gitignored)
+cd android && ./gradlew assembleRelease
+# → android/app/build/outputs/apk/release/app-release.apk
+
+adb install -r app/build/outputs/apk/release/app-release.apk
+```
+
+Prerequisites: the Android SDK (`ANDROID_HOME`, e.g. `~/Library/Android/sdk`) and JDK 17+.
+
+Things worth knowing:
+
+- **Point `.env` somewhere reachable first.** `EXPO_PUBLIC_APPS_URL` is compiled into the
+  bundle, so a `localhost` value produces an APK that can only talk to the phone itself.
+  Use a LAN IP for a physical device, `http://10.0.2.2:8300` for the emulator, or a hosted
+  catalog URL for a build you hand to someone else. Same for `apps.json`'s `provider-url`.
+- **`android.package` in `app.json` is the application id** (`prebuild` requires it).
+  Android ids reject hyphens, so it can't be identical to the iOS `bundleIdentifier`.
+- **The APK is signed with the RN template's debug keystore** - fine for sideloading
+  (enable *Install unknown apps* on the phone), not publishable to the Play Store. For that,
+  add a real keystore and a `release` `signingConfig` in `android/app/build.gradle`.
+- It weighs ~66 MB because it ships native code for all four ABIs (`arm64-v8a`,
+  `armeabi-v7a`, `x86`, `x86_64`), so one file runs on any phone or emulator.
+- `android/` is generated and gitignored - `--clean` regenerates it from scratch, so keep
+  native tweaks in `app.json` / a config plugin rather than editing it by hand.
+
+A `debug` APK (`./gradlew assembleDebug`) is *not* standalone: it fetches the bundle from
+Metro at launch and red-screens with "Unable to load script" if no packager is reachable.
+
 ## Flow: adding a new mini-app
 
 1. **Scaffold** it inside `mini-apps/`:
