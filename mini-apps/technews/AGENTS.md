@@ -75,7 +75,12 @@ host-defined `host:openUrl`. Full field rules are in the manifest spec above.
 | Origin                   | Used for                                              |
 | ------------------------ | ----------------------------------------------------- |
 | `https://hn.algolia.com` | one `search_by_date` request per day window           |
-| `https://r.jina.ai`      | one metadata request per opened story (description, social image); keyless, 20 requests a minute per address, so never for a whole window |
+| `https://r.jina.ai`      | one metadata request per opened story (description, page text for the excerpt, social image); keyless, 20 requests a minute per address, so never for a whole window |
+| `https://wsrv.nl`        | image proxy: every preview image is resized through it, so this is the only image origin the package's CSP has to allow |
+
+Remote images need `@openmini/cli` 0.1.4 or later at pack time: earlier CLIs
+inject `img-src 'self' data:` and every `<img>` is blocked on device, whatever
+the manifest says. Pack with the CLI from the openmini repo until it ships.
 
 `host:openUrl` is registered by the playbook super-app
 (`super-app/openmini-playbook/src/api/host-apis.ts`) and hands an http(s) link
@@ -90,8 +95,10 @@ A personal Hacker News digest. One Algolia request per rolling 24h window,
 seven windows anchored at launch, ranked by
 `log10(points + 2*comments + 1) * (1 + 1.5*keywordMatches) * recencyDecay`.
 A tap unfolds a story in place: the post body for a text post, otherwise the
-article's description and social image fetched on demand, then "Open" and
-"N comments" buttons. Both go through `mini.host.invoke("openUrl")`. Never use
+article's description (or the first few hundred characters of its text when
+it has none) and social image fetched on demand, then "Open" and "N comments"
+buttons. Pull down at the top to fetch the day again; editing the keywords
+drops the whole cache and fetches the selected day. Both go through `mini.host.invoke("openUrl")`. Never use
 an `<a href>` for them: the host draws no chrome, so a top-level navigation
 would replace the app together with its close button.
 

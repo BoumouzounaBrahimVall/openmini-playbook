@@ -13,7 +13,11 @@ export function App() {
   // Taken once at launch: the day windows and the catch-up both hang off it.
   const [anchor] = useState(() => Math.floor(Date.now() / 1000));
   const prefs = usePrefs(anchor);
-  const feed = useFeed(anchor, prefs.keywords);
+  const feed = useFeed(
+    anchor,
+    prefs.keywords,
+    prefs.hydrated ? prefs.keywords.join("\u0000") : null,
+  );
 
   // Follow the host theme (light/dark) and its safe-area insets. The insets
   // come from the bridge rather than CSS env(), which not every host WebView
@@ -58,6 +62,7 @@ export function App() {
           keywords={prefs.keywords}
           catchUp={prefs.catchUp}
           onRetry={feed.retry}
+          onRefresh={feed.refresh}
         />
       )}
     </div>

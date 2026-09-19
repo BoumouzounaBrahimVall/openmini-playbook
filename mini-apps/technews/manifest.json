@@ -2,8 +2,16 @@
   "manifestVersion": 1,
   "id": "com.example.technews",
   "name": "Tech News",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "runtimeVersion": ">=0.0.0",
-  "permissions": ["storage", "network", "host:openUrl"],
-  "allowedDomains": ["https://hn.algolia.com", "https://r.jina.ai"]
+  "permissions": [
+    "storage",
+    "network",
+    "host:openUrl"
+  ],
+  "allowedDomains": [
+    "https://hn.algolia.com",
+    "https://r.jina.ai",
+    "https://wsrv.nl"
+  ]
 }

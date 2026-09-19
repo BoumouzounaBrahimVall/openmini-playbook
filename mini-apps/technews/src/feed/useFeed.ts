@@ -20,6 +20,8 @@ interface UseFeed {
   state: WindowState;
   feed: Feed;
   retry: () => void;
+  /** Drop the selected window's cache and fetch it again. */
+  refresh: () => void;
 }
 
 const LOADING: WindowState = { status: "loading" };
@@ -29,8 +31,15 @@ const LOADING: WindowState = { status: "loading" };
  * back and forth is instant. `anchor` is fixed at launch so the chips never
  * shift under a thumb. The cache is a map rebuilt on every write rather
  * than mutated, so React sees each change.
+ * `filterKey` names the current keyword set once it is known; when it changes
+ * the whole cache is dropped and the selected window fetched again, so an
+ * edited filter shows fresh stories, not re-sorted ones.
  */
-export function useFeed(anchor: number, keywords: readonly string[]): UseFeed {
+export function useFeed(
+  anchor: number,
+  keywords: readonly string[],
+  filterKey: string | null,
+): UseFeed {
   const windows = useMemo(() => dayWindows(anchor), [anchor]);
   const [selectedDay, setSelectedDay] = useState(0);
   const [cache, setCache] = useState<ReadonlyMap<number, WindowState>>(
@@ -44,6 +53,17 @@ export function useFeed(anchor: number, keywords: readonly string[]): UseFeed {
 
   const selected = windows[selectedDay];
   const state = cache.get(selectedDay) ?? LOADING;
+
+  // The first key seen is the saved filter arriving, not an edit.
+  const lastFilterKey = useRef<string | null>(null);
+  useEffect(() => {
+    if (filterKey === null || lastFilterKey.current === filterKey) return;
+    const isEdit = lastFilterKey.current !== null;
+    lastFilterKey.current = filterKey;
+    if (!isEdit) return;
+    inFlight.current = new Set();
+    setCache(new Map());
+  }, [filterKey]);
 
   const load = useCallback((window: DayWindow) => {
     if (inFlight.current.has(window.daysAgo)) return;
@@ -68,6 +88,16 @@ export function useFeed(anchor: number, keywords: readonly string[]): UseFeed {
 
   const retry = useCallback(() => load(selected), [load, selected]);
 
+  // Deleting the entry is enough: the mount effect sees the gap and fetches.
+  const refresh = useCallback(() => {
+    if (inFlight.current.has(selected.daysAgo)) return;
+    setCache((current) => {
+      const next = new Map(current);
+      next.delete(selected.daysAgo);
+      return next;
+    });
+  }, [selected]);
+
   const feed = useMemo(
     () =>
       rankFeed(state.status === "ready" ? state.stories : [], keywords, selected),
@@ -81,6 +111,7 @@ export function useFeed(anchor: number, keywords: readonly string[]): UseFeed {
     state,
     feed,
     retry,
+    refresh,
   };
 }
 

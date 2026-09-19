@@ -59,6 +59,8 @@ body {
   overscroll-behavior: none;
   -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
+  /* No pinch or double-tap zoom: this is an app screen, not a document. */
+  touch-action: pan-x pan-y;
 }
 
 button {
@@ -187,6 +189,19 @@ button {
   min-height: 0;
   overflow-y: auto;
   padding-bottom: calc(var(--safe-bottom) + 40px);
+}
+
+.pull-indicator {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  height: 0;
+  overflow: hidden;
+  transition: height 120ms ease-out;
+}
+
+.pull-indicator .micro {
+  padding-bottom: 12px;
 }
 
 .day-chips {
