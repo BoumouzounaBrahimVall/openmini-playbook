@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { fetchWindow } from "./fetchWindow.js";
 import {
   dayWindows,
+  filterByFocus,
   rankFeed,
   type DayWindow,
   type Feed,
@@ -33,12 +34,14 @@ const LOADING: WindowState = { status: "loading" };
  * than mutated, so React sees each change.
  * `filterKey` names the current keyword set once it is known; when it changes
  * the whole cache is dropped and the selected window fetched again, so an
- * edited filter shows fresh stories, not re-sorted ones.
+ * edited filter shows fresh stories, not re-sorted ones. `focus` narrows the
+ * ranked window to stories on those keywords without touching the cache.
  */
 export function useFeed(
   anchor: number,
   keywords: readonly string[],
   filterKey: string | null,
+  focus: readonly string[],
 ): UseFeed {
   const windows = useMemo(() => dayWindows(anchor), [anchor]);
   const [selectedDay, setSelectedDay] = useState(0);
@@ -98,10 +101,15 @@ export function useFeed(
     });
   }, [selected]);
 
+  // Focus is a local view on the fetched window: no request, just a subset.
   const feed = useMemo(
     () =>
-      rankFeed(state.status === "ready" ? state.stories : [], keywords, selected),
-    [state, keywords, selected],
+      rankFeed(
+        filterByFocus(state.status === "ready" ? state.stories : [], focus),
+        keywords,
+        selected,
+      ),
+    [state, keywords, selected, focus],
   );
 
   return {

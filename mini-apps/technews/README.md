@@ -64,6 +64,13 @@ A multi-word keyword such as `react native` matches as a phrase.
 
 Editing the list saves it immediately and fetches the current day again.
 
+## Showing only some topics
+
+Under the day chips, a second row lists `All` and each keyword you follow.
+Tap one or more keywords to see only the stories on those topics; the top
+story is then the best of them. Tap `All` to see the whole day again. This
+filter is local to the session: it costs no request and is not saved.
+
 ## Reading and opening a story
 
 Tap a story to unfold it. A text post (Ask HN and the like) shows its body.

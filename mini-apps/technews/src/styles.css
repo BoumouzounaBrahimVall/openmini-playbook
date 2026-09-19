@@ -249,6 +249,39 @@ button {
   background: var(--fg);
 }
 
+.focus-chips {
+  display: flex;
+  gap: 8px;
+  padding: 12px var(--gutter);
+  overflow-x: auto;
+  scrollbar-width: none;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.focus-chips::-webkit-scrollbar {
+  display: none;
+}
+
+.focus-chip {
+  flex-shrink: 0;
+  height: 28px;
+  padding: 0 12px;
+  border: 1px solid var(--hairline-strong);
+  border-radius: 14px;
+  background: transparent;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.focus-chip[aria-pressed="true"] {
+  border-color: var(--fg);
+  background: var(--fg);
+  color: var(--bg);
+}
+
 .catch-up {
   margin: 0;
   padding: 12px var(--gutter);
