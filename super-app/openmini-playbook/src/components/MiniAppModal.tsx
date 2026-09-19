@@ -13,6 +13,7 @@ import {
   type MiniAppError,
 } from "@openmini/react-native";
 import { asyncStorageKv } from "@openmini/react-native/async-storage";
+import { hostApis } from "../api/host-apis";
 import type { MiniAppEntry } from "../api/launcher";
 import { useTheme } from "../theme";
 
@@ -45,7 +46,11 @@ export function MiniAppModal({ providerUrl, app, onClose }: MiniAppModalProps) {
         style={[styles.container, { backgroundColor: theme.surface }]}
       >
         {app !== null && (
-          <MiniAppProvider registryUrl={providerUrl} storage={storage}>
+          <MiniAppProvider
+            registryUrl={providerUrl}
+            storage={storage}
+            customApis={hostApis}
+          >
             {error ? (
               <View style={styles.errorBox}>
                 <Text style={[styles.errorTitle, { color: theme.text }]}>

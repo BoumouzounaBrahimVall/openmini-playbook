@@ -120,6 +120,10 @@ doesn't open inside a white shell.
 One rough edge: `getInfo()` is a one-shot read with no theme-change event in the bridge, so
 toggling the OS theme while a mini-app is open doesn't reach it until the card is reopened.
 
+## Host-defined APIs
+
+The bridge's built-in surface is frozen, so anything the host does on a mini-app's behalf (open a link in the system browser, share a session, …) is a host-defined API: the super-app registers a handler under a bare name in `super-app/openmini-playbook/src/api/host-apis.ts`, and a mini-app declares `host:<name>` in its manifest and calls `mini.host.invoke(name, payload)`. The first one is `openUrl`, used by Tech News, because a plain `<a href>` inside the WebView would replace the mini-app along with its close button.
+
 ## Flow: adding a new mini-app
 
 1. **Scaffold** it inside `mini-apps/`:
