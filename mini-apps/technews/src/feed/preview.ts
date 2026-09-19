@@ -7,9 +7,19 @@
 
 const READER_ORIGIN = "https://r.jina.ai";
 const HN_ITEM_ORIGIN = "https://news.ycombinator.com";
+/**
+ * Images go through one allow-listed proxy: the packaged page's CSP only lets
+ * `<img>` load from `allowedDomains`, and articles come from everywhere.
+ */
+const IMAGE_PROXY_ORIGIN = "https://wsrv.nl";
+const IMAGE_WIDTH = 800;
+/** Characters of page text shown when the page has no description. */
+export const EXCERPT_LENGTH = 280;
 
 export interface Preview {
   description: string | null;
+  /** The start of the page text, for pages without a description. */
+  excerpt: string | null;
   /** https only; anything else reads as no image. */
   image: string | null;
 }
@@ -42,8 +52,30 @@ export function parsePreview(body: string): Preview | null {
       : {};
   return {
     description: nonEmpty(record.description),
+    excerpt: excerptOf(nonEmpty(record.text) ?? nonEmpty(record.content)),
     image: httpsUrl(metadata["og:image"]) ?? httpsUrl(metadata["twitter:image"]),
   };
+}
+
+/** Resized and re-encoded by the proxy, so a 4 MB hero costs a few kilobytes. */
+export function imageUrl(original: string): string {
+  const params = new URLSearchParams({
+    url: original,
+    w: String(IMAGE_WIDTH),
+    output: "webp",
+  });
+  return `${IMAGE_PROXY_ORIGIN}/?${params.toString()}`;
+}
+
+/** Whitespace collapsed, cut at the last word boundary before the limit. */
+function excerptOf(text: string | null): string | null {
+  if (text === null) return null;
+  const flat = text.replace(/\s+/g, " ").trim();
+  if (flat.length === 0) return null;
+  if (flat.length <= EXCERPT_LENGTH) return flat;
+  const head = flat.slice(0, EXCERPT_LENGTH);
+  const cut = head.lastIndexOf(" ");
+  return `${(cut > 0 ? head.slice(0, cut) : head).trimEnd()}…`;
 }
 
 function nonEmpty(value: unknown): string | null {

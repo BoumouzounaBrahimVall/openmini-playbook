@@ -28,7 +28,13 @@ import {
   serializeLastOpened,
 } from "../prefs/store.js";
 import { catchUp } from "../prefs/catchup.js";
-import { hnItemUrl, parsePreview, readerUrl } from "./preview.js";
+import {
+  EXCERPT_LENGTH,
+  hnItemUrl,
+  imageUrl,
+  parsePreview,
+  readerUrl,
+} from "./preview.js";
 
 /** 2025-09-19T00:00:00Z, a fixed anchor so every window below is stable. */
 const ANCHOR = 1_758_240_000;
@@ -207,6 +213,7 @@ describe("preview", () => {
     });
     expect(parsePreview(body)).toEqual({
       description: "Empowering everyone.",
+      excerpt: null,
       image: "https://rust-lang.org/social.jpg",
     });
   });
@@ -217,6 +224,7 @@ describe("preview", () => {
     });
     expect(parsePreview(body)).toEqual({
       description: null,
+      excerpt: null,
       image: "https://x.test/a.png",
     });
   });
@@ -225,9 +233,48 @@ describe("preview", () => {
     const body = JSON.stringify({
       data: { description: "d", metadata: { "og:image": "http://x.test/a.png" } },
     });
-    expect(parsePreview(body)).toEqual({ description: "d", image: null });
+    expect(parsePreview(body)).toEqual({
+      description: "d",
+      excerpt: null,
+      image: null,
+    });
     expect(parsePreview("nope")).toBeNull();
     expect(parsePreview(JSON.stringify({ data: "x" }))).toBeNull();
+  });
+
+  it("cuts an excerpt from the page text at a word boundary", () => {
+    const words = Array.from({ length: 120 }, (_, i) => `word${String(i)}`);
+    const body = JSON.stringify({
+      data: { text: `  ${words.join("  ")}\n\n` },
+    });
+    const { excerpt } = parsePreview(body) ?? { excerpt: null };
+    expect(excerpt).not.toBeNull();
+    expect(excerpt?.length).toBeLessThanOrEqual(EXCERPT_LENGTH + 1);
+    expect(excerpt?.endsWith("…")).toBe(true);
+    // Every token is a whole word from the source: nothing was cut mid-word.
+    const tokens = (excerpt ?? "").slice(0, -1).split(" ");
+    expect(tokens.every((token) => words.includes(token))).toBe(true);
+    expect(excerpt?.startsWith("word0 word1 word2")).toBe(true);
+  });
+
+  it("keeps a short page text whole and reads the content field too", () => {
+    expect(
+      parsePreview(JSON.stringify({ data: { content: "Short body." } }))
+        ?.excerpt,
+    ).toBe("Short body.");
+    expect(
+      parsePreview(JSON.stringify({ data: { text: "   " } }))?.excerpt,
+    ).toBeNull();
+  });
+
+  it("routes an image through the allow-listed proxy, resized", () => {
+    const url = imageUrl("https://rust-lang.org/a b.jpg?x=1&y=2");
+    const parsed = new URL(url);
+    expect(parsed.origin).toBe("https://wsrv.nl");
+    expect(parsed.searchParams.get("url")).toBe(
+      "https://rust-lang.org/a b.jpg?x=1&y=2",
+    );
+    expect(parsed.searchParams.get("w")).toBe("800");
   });
 });
 

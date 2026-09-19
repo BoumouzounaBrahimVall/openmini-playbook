@@ -4,14 +4,13 @@ import { parsePreview, readerUrl, type Preview } from "./preview.js";
 const REQUEST_TIMEOUT_MS = 12_000;
 
 /**
- * Reader returns the page's metadata as JSON. The target selector limits the
- * extracted body to the title element, which shrinks the answer from tens of
- * kilobytes to about two while leaving the description and images intact.
+ * Reader returns the page's metadata and its readable text as JSON. The text
+ * is what the excerpt comes from when a page has no description, which most
+ * blog posts do not, so the body is worth its few tens of kilobytes per tap.
  */
 const READER_HEADERS: Readonly<Record<string, string>> = {
   Accept: "application/json",
   "X-Return-Format": "text",
-  "X-Target-Selector": "title",
 };
 
 /** Null covers every failure: the row simply shows no preview. */

@@ -6,6 +6,7 @@ import {
 } from "../feed/feed.js";
 import type { WindowState } from "../feed/useFeed.js";
 import { usePreviews, type PreviewState } from "../feed/usePreviews.js";
+import { usePullToRefresh } from "../feed/usePullToRefresh.js";
 import type { CatchUp } from "../prefs/catchup.js";
 import { CatchUpBanner } from "./CatchUpBanner.js";
 import { DayChips } from "./DayChips.js";
@@ -21,6 +22,7 @@ interface FeedScreenProps {
   keywords: readonly string[];
   catchUp: CatchUp | null;
   onRetry: () => void;
+  onRefresh: () => void;
 }
 
 /** The digest: chips, an optional catch-up line, then the ranked window. */
@@ -33,10 +35,25 @@ export function FeedScreen({
   keywords,
   catchUp,
   onRetry,
+  onRefresh,
 }: FeedScreenProps) {
   const previews = usePreviews();
+  const { pull, armed, handlers } = usePullToRefresh(onRefresh);
   return (
-    <main className="feed">
+    <main className="feed" {...handlers}>
+      <div
+        className="pull-indicator"
+        style={{ height: `${String(pull)}px` }}
+        aria-hidden={pull === 0}
+      >
+        <span className="micro">
+          {state.status === "loading"
+            ? "Refreshing"
+            : armed
+              ? "Release to refresh"
+              : "Pull to refresh"}
+        </span>
+      </div>
       <DayChips
         windows={windows}
         selected={selected.daysAgo}

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { Story } from "../feed/feed.js";
 import { openLink } from "../feed/openLink.js";
-import { hnItemUrl } from "../feed/preview.js";
+import { hnItemUrl, imageUrl } from "../feed/preview.js";
 import type { PreviewState } from "../feed/usePreviews.js";
 
 interface StoryDetailProps {
@@ -22,18 +22,19 @@ export function StoryDetail({ story, preview }: StoryDetailProps) {
     setFailure(result.ok ? null : result.message);
   }
 
+  // A text post carries its own body. A link shows the page's description,
+  // or the start of its text when there is none.
+  const loaded = preview.status === "done" ? preview.preview : null;
   const description =
-    story.text ??
-    (preview.status === "done" ? preview.preview?.description ?? null : null);
-  const image =
-    preview.status === "done" ? preview.preview?.image ?? null : null;
+    story.text ?? loaded?.description ?? loaded?.excerpt ?? null;
+  const image = loaded?.image ?? null;
 
   return (
     <div className="story-detail">
       {image === null ? null : (
         <img
           className="story-image"
-          src={image}
+          src={imageUrl(image)}
           alt=""
           loading="lazy"
           decoding="async"
