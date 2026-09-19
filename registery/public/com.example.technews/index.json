@@ -2,7 +2,7 @@
   "registryVersion": 1,
   "id": "com.example.technews",
   "name": "Tech News",
-  "latest": "0.2.0",
+  "latest": "0.3.0",
   "versions": {
     "0.1.0": {
       "package": "0.1.0/app.mpkg",
@@ -17,6 +17,13 @@
       "size": 83606,
       "runtimeVersion": "0.1.3",
       "publishedAt": "2026-09-19T12:01:08.669Z"
+    },
+    "0.3.0": {
+      "package": "0.3.0/app.mpkg",
+      "sha256": "5832b36e029f6f708b559941588849cc8ce56d3cdf9adc1c641e80550e6d8042",
+      "size": 83942,
+      "runtimeVersion": "0.1.3",
+      "publishedAt": "2026-09-19T12:13:51.964Z"
     }
   }
 }
