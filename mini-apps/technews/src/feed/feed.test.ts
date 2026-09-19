@@ -5,6 +5,7 @@ import {
   RECENCY_FLOOR,
   WINDOW_COUNT,
   dayWindows,
+  filterByFocus,
   htmlToText,
   matchKeywords,
   matchedKeywords,
@@ -409,6 +410,34 @@ describe("rankFeed", () => {
     const input = [...stories];
     rankFeed(input, [], window);
     expect(input.map((s) => s.id)).toEqual(["a", "b", "c", "d"]);
+  });
+});
+
+describe("filterByFocus", () => {
+  const stories = [
+    story({ id: "a", title: "Quiet thing" }),
+    story({ id: "b", title: "Rust wins" }),
+    story({ id: "c", title: "Claude and Rust", url: "https://x.test" }),
+    story({ id: "d", title: "Nothing here", url: "https://blog.rust-lang.org/p" }),
+  ];
+
+  it("keeps everything when no keyword is in focus", () => {
+    expect(filterByFocus(stories, [])).toBe(stories);
+  });
+
+  it("keeps only the stories matching at least one focused keyword", () => {
+    expect(filterByFocus(stories, ["rust"]).map((s) => s.id)).toEqual([
+      "b",
+      "c",
+      "d",
+    ]);
+    expect(filterByFocus(stories, ["claude"]).map((s) => s.id)).toEqual(["c"]);
+  });
+
+  it("unions several focused keywords and preserves order", () => {
+    expect(
+      filterByFocus(stories, ["claude", "rust"]).map((s) => s.id),
+    ).toEqual(["b", "c", "d"]);
   });
 });
 

@@ -1,5 +1,5 @@
 import { mini } from "@openmini/runtime";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { AppHeader } from "./components/AppHeader.js";
 import { FeedScreen } from "./components/FeedScreen.js";
 import { SettingsScreen } from "./components/SettingsScreen.js";
@@ -13,10 +13,23 @@ export function App() {
   // Taken once at launch: the day windows and the catch-up both hang off it.
   const [anchor] = useState(() => Math.floor(Date.now() / 1000));
   const prefs = usePrefs(anchor);
+  // Session-only: which of the followed keywords to show. A keyword removed
+  // on the settings screen drops out of the focus on its own.
+  const [focusPicks, setFocusPicks] = useState<readonly string[]>([]);
+  const focus = focusPicks.filter((keyword) => prefs.keywords.includes(keyword));
+  const toggleFocus = useCallback((keyword: string) => {
+    setFocusPicks((current) =>
+      current.includes(keyword)
+        ? current.filter((existing) => existing !== keyword)
+        : [...current, keyword],
+    );
+  }, []);
+  const clearFocus = useCallback(() => setFocusPicks([]), []);
   const feed = useFeed(
     anchor,
     prefs.keywords,
     prefs.hydrated ? prefs.keywords.join("\u0000") : null,
+    focus,
   );
 
   // Follow the host theme (light/dark) and its safe-area insets. The insets
@@ -60,6 +73,9 @@ export function App() {
           state={feed.state}
           feed={feed.feed}
           keywords={prefs.keywords}
+          focus={focus}
+          onToggleFocus={toggleFocus}
+          onClearFocus={clearFocus}
           catchUp={prefs.catchUp}
           onRetry={feed.retry}
           onRefresh={feed.refresh}

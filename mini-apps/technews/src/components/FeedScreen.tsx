@@ -10,6 +10,7 @@ import { usePullToRefresh } from "../feed/usePullToRefresh.js";
 import type { CatchUp } from "../prefs/catchup.js";
 import { CatchUpBanner } from "./CatchUpBanner.js";
 import { DayChips } from "./DayChips.js";
+import { FocusChips } from "./FocusChips.js";
 import { HighlightCard } from "./HighlightCard.js";
 import { StorySection } from "./StorySection.js";
 
@@ -20,6 +21,10 @@ interface FeedScreenProps {
   state: WindowState;
   feed: Feed;
   keywords: readonly string[];
+  /** Keywords in focus; empty shows the whole window. */
+  focus: readonly string[];
+  onToggleFocus: (keyword: string) => void;
+  onClearFocus: () => void;
   catchUp: CatchUp | null;
   onRetry: () => void;
   onRefresh: () => void;
@@ -33,6 +38,9 @@ export function FeedScreen({
   state,
   feed,
   keywords,
+  focus,
+  onToggleFocus,
+  onClearFocus,
   catchUp,
   onRetry,
   onRefresh,
@@ -60,6 +68,12 @@ export function FeedScreen({
         unseen={catchUp?.unseenDaysAgo ?? []}
         onSelect={onSelect}
       />
+      <FocusChips
+        keywords={keywords}
+        focus={focus}
+        onToggle={onToggleFocus}
+        onClear={onClearFocus}
+      />
       {catchUp === null ? null : <CatchUpBanner {...catchUp} />}
       <div aria-live="polite">
         <WindowBody
@@ -68,6 +82,7 @@ export function FeedScreen({
           keywords={keywords}
           label={windowLabel(selected.daysAgo)}
           onRetry={onRetry}
+          focused={focus.length > 0}
           previewOf={previews.stateOf}
           onRequestPreview={previews.request}
         />
@@ -82,6 +97,7 @@ interface WindowBodyProps {
   keywords: readonly string[];
   label: string;
   onRetry: () => void;
+  focused: boolean;
   previewOf: (story: Story) => PreviewState;
   onRequestPreview: (story: Story) => void;
 }
@@ -92,6 +108,7 @@ function WindowBody({
   keywords,
   label,
   onRetry,
+  focused,
   previewOf,
   onRequestPreview,
 }: WindowBodyProps) {
@@ -109,7 +126,11 @@ function WindowBody({
     );
   }
   if (feed.highlight === null) {
-    return <p className="micro status">Nothing in this window</p>;
+    return (
+      <p className="micro status">
+        {focused ? "Nothing on those topics in this window" : "Nothing in this window"}
+      </p>
+    );
   }
   // With no keyword matches the split has nothing to say, so the list is flat.
   const split = feed.forYou.length > 0;

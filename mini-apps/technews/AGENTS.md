@@ -98,7 +98,9 @@ A tap unfolds a story in place: the post body for a text post, otherwise the
 article's description (or the first few hundred characters of its text when
 it has none) and social image fetched on demand, then "Open" and "N comments"
 buttons. Pull down at the top to fetch the day again; editing the keywords
-drops the whole cache and fetches the selected day. Both go through `mini.host.invoke("openUrl")`. Never use
+drops the whole cache and fetches the selected day. The focus chips under the
+day chips are a session-only, client-side filter (`filterByFocus`): they never
+trigger a request. Both go through `mini.host.invoke("openUrl")`. Never use
 an `<a href>` for them: the host draws no chrome, so a top-level navigation
 would replace the app together with its close button.
 

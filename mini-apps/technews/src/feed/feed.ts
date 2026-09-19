@@ -212,6 +212,21 @@ function recencyDecay(createdAt: number, window: DayWindow): number {
   return 1 - (1 - RECENCY_FLOOR) * (age / DAY_SECONDS);
 }
 
+/**
+ * The stories matching at least one focused keyword, in their given order.
+ * An empty focus is "All" and returns the input untouched. This runs before
+ * ranking, so the highlight is the best story on the chosen topics.
+ */
+export function filterByFocus(
+  stories: readonly Story[],
+  focus: readonly string[],
+): readonly Story[] {
+  if (focus.length === 0) return stories;
+  return stories.filter(
+    (story) => matchKeywords(story.title, story.url, focus) > 0,
+  );
+}
+
 export function rankFeed(
   stories: readonly Story[],
   keywords: readonly string[],
